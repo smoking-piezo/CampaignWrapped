@@ -9,7 +9,12 @@
 # - don't forget, you've fucked with the data in testslice.txt for testing purposes... FirstWorld.txt is the original, don't fuck with it
 # finding nat 20s or 1s: look for the only roll line that has the = sign in it, and it should be the first integer to the right of the = 
 # finding attacks: can we look for a line that has BOTH "attack" and "damage" in the line to start? that will give to hit and damage numbers. 
+# attack keywords: attack, bite, slam, claw, wing 
+# note that iterative attacks might be frustrating here: claws 2 # damage etc
 # future attacks: Valeric's special macros and criticals
+# theory: chat messages that are only 0-2 len are just like words we put in chat
+# jump off find_roller to create characters or attribute a roll to an existing character? we should pass the whole roll to find_roller then
+# another type of roll we've missed: drinking potions, look for keyword "(Drink)" so it doesn't get mixed up with someone just sharing a potion item to chat
 
 from dataclasses import dataclass
 import datetime
