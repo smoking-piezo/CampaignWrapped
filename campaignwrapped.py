@@ -7,6 +7,7 @@
 # - how to specify type of saving throw when some don't specify? we'll have to pull from later lines to get that info. 
 # - what kind of data type to hold a shitton of rolls? 
 # - don't forget, you've fucked with the data in testslice.txt for testing purposes... FirstWorld.txt is the original, don't fuck with it
+# finding nat 20s or 1s: look for the only roll line that has the = sign in it, and it should be the first integer to the right of the = 
 
 from dataclasses import dataclass
 import datetime
