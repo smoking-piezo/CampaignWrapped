@@ -15,6 +15,10 @@
 # theory: chat messages that are only 0-2 len are just like words we put in chat
 # jump off find_roller to create characters or attribute a roll to an existing character? we should pass the whole roll to find_roller then
 # another type of roll we've missed: drinking potions, look for keyword "(Drink)" so it doesn't get mixed up with someone just sharing a potion item to chat
+# another type of roll: CMB/CMD, "damage" (see 9/5/2022, 8:26:47), $stat Ability Test, 
+# potential error: foundry stopped formatting the d20 roll properly here?? 9/26/2022, 8:28:50 PM
+# Zen shared the spell instead of casting it, how to handle 10/7/2022, 8:02:29
+
 
 from dataclasses import dataclass
 import datetime
