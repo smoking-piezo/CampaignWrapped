@@ -3,17 +3,13 @@
 # A silly program meant to pull combat stats from a Pathfinder 1e chat log so players can reminisce over their good and bad rolls.  
 
 # TODO 
-# - how to specify type of saving throw when some don't specify? we'll have to pull from later lines to get that info. 
-# - what kind of data type to hold a shitton of rolls? 
-# - don't forget, you've fucked with the data in testslice.txt for testing purposes... FirstWorld.txt is the original, don't fuck with it
+# what kind of data type to hold a shitton of rolls? 
+# don't forget, you've fucked with the data in testslice.txt for testing purposes... FirstWorld.txt is the original, don't fuck with it
 # finding nat 20s or 1s: look for the only roll line that has the = sign in it, and it should be the first integer to the right of the = 
-# finding attacks: can we look for a line that has BOTH "attack" and "damage" in the line to start? that will give to hit and damage numbers. 
-# attack keywords: attack, bite, slam, claw, wing 
 # note that iterative attacks might be frustrating here: claws 2 # damage etc
 # future attacks: Valeric's special macros and criticals
 # theory: chat messages that are only 0-2 len are just like words we put in chat
 # jump off find_roller to create characters or attribute a roll to an existing character? we should pass the whole roll to find_roller then
-# another type of roll we've missed: drinking potions, look for keyword "(Drink)" so it doesn't get mixed up with someone just sharing a potion item to chat
 # another type of roll: CMB/CMD, "damage" (see 9/5/2022, 8:26:47), $stat Ability Test, 
 # potential error: foundry stopped formatting the d20 roll properly here?? 9/26/2022, 8:28:50 PM
 # Zen shared the spell instead of casting it, how to handle 10/7/2022, 8:02:29
@@ -43,7 +39,7 @@ def find_roller(txt):
     return roller
 
 def find_roll_date(txt): 
-    # foundry formatted the dates like X/X/202X, XX:XX:XX.  
+    # Date is found in the 1st line of the roll, formatted line  [X/X/202X, XX:XX:XX] Roller_Name  
     month_str_pos = txt.rfind("/", 0, 4)
     month = int(txt[1:month_str_pos])
 
@@ -70,22 +66,34 @@ def find_roll_date(txt):
     return roll_date
 
 def find_roll_type(roll_lines):
-    # TODO 
+   # TODO 
     # Differentiate saving throws if the system doesn't do that for us
     # Figure out attacks, spells/feature/item uses, initiative, concentration checks
     # count # of d20, d100s rolled 
 
-    # roll_lines is a list where each string is a line of the roll. the first line is -s, then datetime and char rolling, then more information about the roll
-    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use 7 = raw 8 = error
-
+    # roll_lines is a list where each string is a line of the roll. the 0th line is hyphens, then 1st is datetime and char rolling, then 3rd is more information about the roll
+    # while many types of rolls can be figured out easily from the 3rd line, some are more variable. initiative and raw rolls can look the same, and attacks are inconsistent
+    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use, 7 = raw, 8 = error
+    
+    roll_len = len(roll_lines)
     roll_id = roll_lines[2]
     roll_id_split = roll_id.split(" ")
     roll_type = 0 
-    len_split = len(roll_id_split)
+    save_check = ""
     saving_throw_type = ""
     skill_type = ""
     use_type = ""
     init_roll = 0.0
+    attack_keywords = ["Attack", "Claw", "Wing", "Bite", "Slam"]
+    save_keywords = ["Constitution", "Dexterity", "Wisdom"]
+
+    init_check = [line for line in roll_lines if line.startswith('Initiative')]
+
+    for i in range (0, roll_len):
+        attack_check = any(roll_lines[i].startswith(keyword) for keyword in attack_keywords)
+        if attack_check == True:
+            roll_type = 5
+            exit
 
     for i in roll_id_split:
         match i:
@@ -93,18 +101,21 @@ def find_roll_type(roll_lines):
                 roll_type = 3
                 roll_id_split.remove("Saving")
                 roll_id_split.remove("Throw")
+
                 if len(roll_id_split) == 0:
                     # if there's nothing left in the roll_id_split then we've found an old saving throw that doesn't specify and we have to figure it out
                     # a Fortitude save will include mention of the roller's Constitution; Reflex, their Dexterity; and Will, their Wisdom 
-                    save_keywords = ["Constitution", "Dexterity", "Wisdom"]
-                    roll_len = len(roll_lines)
+                    
                     for i in range(0,roll_len):
                         save_check = any(roll_lines[i].startswith(keyword) for keyword in save_keywords)
                         if save_check:
+                            save_type = roll_lines[i].split(" ")
+                            save_type = save_type[0]
                             exit
-                    #save_check = [keyword for keyword in roll_lines if keyword.startswith(save_keywords)]
+                        else:
+                            save_type = "Other"
 
-                    match save_check:
+                    match save_type:
                         case "Constitution":
                             saving_throw_type = "Fortitude"
                         case "Dexterity":
@@ -113,11 +124,9 @@ def find_roll_type(roll_lines):
                             saving_throw_type = "Will"
                         case _:
                             saving_throw_type = "Save"
-                    
                 else: 
                     saving_throw_type = roll_id_split
-                
-                print(saving_throw_type)
+                    
             case "Concentration": 
                 # what roll_type are we giving these? shoving into untyped since it's not handled yet
                 roll_type = 0
@@ -133,9 +142,12 @@ def find_roll_type(roll_lines):
                 else: 
                     skill_type = roll_id_split[0]
 
-            case "(Use)":
+            case "(Use)" | "(Drink)":
                 roll_type = 6
-                roll_id_split.remove("(Use)")
+                if i == "(Use)":
+                    roll_id_split.remove("(Use)")
+                else: 
+                    roll_id_split.remove("(Drink)")
                 use_type = ' '.join(roll_id_split)
 
             case "Level" | "Up" | "Report":
@@ -249,6 +261,7 @@ def pull_rolls(src_file):
     roll_raws = {
         roll_id: []
     }
+    first_line_flag = True
 
     with open(src_file) as f:
         first_roll_flag = True 
@@ -257,8 +270,9 @@ def pull_rolls(src_file):
             txt = line.strip()
 
             # if it's our first roll there won't be -- before it
-            if roll_id == 0: 
-                roll_raws[roll_id].append(txt)
+            if roll_id == 0 and first_line_flag: 
+                roll_raws[roll_id].append("")
+                first_line_flag = False
 
             # if the first char of txt is - then it's a new roll 
             if txt.startswith("--"):
@@ -267,8 +281,6 @@ def pull_rolls(src_file):
                                   
             else:
                 roll_raws[roll_id].append(txt)       
-                
-
     return roll_raws
 
 def analyze_roll_stats(roll_stats):
@@ -317,6 +329,7 @@ def analyze_roll_stats(roll_stats):
 def main():
     src_file =  "C:/Users/cdurham/PythonCode/personal/data/testslice.txt"
     #src_file = 'Data\TestSlice.txt'
+    src_file = 'Data\FirstWorld_Mod.txt'
     roll_id = 0
     roll_raws = {
         roll_id: []
