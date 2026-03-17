@@ -3,7 +3,6 @@
 # A silly program meant to pull combat stats from a Pathfinder 1e chat log so players can reminisce over their good and bad rolls.  
 
 # TODO 
-# yeah, ok eventually you should probably accept that the first line of a real log doesn't start with hyphens 
 # - how to specify type of saving throw when some don't specify? we'll have to pull from later lines to get that info. 
 # - what kind of data type to hold a shitton of rolls? 
 # - don't forget, you've fucked with the data in testslice.txt for testing purposes... FirstWorld.txt is the original, don't fuck with it
@@ -22,7 +21,7 @@
 
 from dataclasses import dataclass
 import datetime
-import pandas as pd
+#import pandas as pd
 
 @dataclass
 class roll():
@@ -92,12 +91,33 @@ def find_roll_type(roll_lines):
         match i:
             case "Saving" | "Throw": 
                 roll_type = 3
-                #roll_id_split.remove("Saving")
-                #roll_id_split.remove("Throw")
+                roll_id_split.remove("Saving")
+                roll_id_split.remove("Throw")
+                if len(roll_id_split) == 0:
+                    # if there's nothing left in the roll_id_split then we've found an old saving throw that doesn't specify and we have to figure it out
+                    # a Fortitude save will include mention of the roller's Constitution; Reflex, their Dexterity; and Will, their Wisdom 
+                    save_keywords = ["Constitution", "Dexterity", "Wisdom"]
+                    roll_len = len(roll_lines)
+                    for i in range(0,roll_len):
+                        save_check = any(roll_lines[i].startswith(keyword) for keyword in save_keywords)
+                        if save_check:
+                            exit
+                    #save_check = [keyword for keyword in roll_lines if keyword.startswith(save_keywords)]
 
-                saving_throw_type = "Save"
-                #saving_throw_type = roll_id_split[0]
-
+                    match save_check:
+                        case "Constitution":
+                            saving_throw_type = "Fortitude"
+                        case "Dexterity":
+                            saving_throw_type = "Reflex"
+                        case "Wisdom":
+                            saving_throw_type = "Will"
+                        case _:
+                            saving_throw_type = "Save"
+                    
+                else: 
+                    saving_throw_type = roll_id_split
+                
+                print(saving_throw_type)
             case "Concentration": 
                 # what roll_type are we giving these? shoving into untyped since it's not handled yet
                 roll_type = 0
@@ -236,14 +256,14 @@ def pull_rolls(src_file):
         for line in f: 
             txt = line.strip()
 
+            # if it's our first roll there won't be -- before it
+            if roll_id == 0: 
+                roll_raws[roll_id].append(txt)
+
             # if the first char of txt is - then it's a new roll 
             if txt.startswith("--"):
-                if first_roll_flag == False:
-                    roll_id += 1
-                    roll_raws[roll_id] = [txt] 
-                if first_roll_flag: 
-                    first_roll_flag = False
-                    roll_raws[roll_id].append(txt)
+                roll_id += 1
+                roll_raws[roll_id] = [txt] 
                                   
             else:
                 roll_raws[roll_id].append(txt)       
@@ -295,7 +315,8 @@ def analyze_roll_stats(roll_stats):
     return total_rolls, rolls_by_type, error_ids
 
 def main():
-    src_file = 'Data\TestSlice.txt'
+    src_file =  "C:/Users/cdurham/PythonCode/personal/data/testslice.txt"
+    #src_file = 'Data\TestSlice.txt'
     roll_id = 0
     roll_raws = {
         roll_id: []
