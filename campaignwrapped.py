@@ -73,7 +73,10 @@ def find_roll_type(roll_lines):
 
     # roll_lines is a list where each string is a line of the roll. the 0th line is hyphens, then 1st is datetime and char rolling, then 3rd is more information about the roll
     # while many types of rolls can be figured out easily from the 3rd line, some are more variable. initiative and raw rolls can look the same, and attacks are inconsistent
-    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use, 7 = raw, 8 = error
+    # we'll figure out initiative and attacks from context clues on other lines
+    # raw rolls will be 4 lines long (--, [date, time] roller, roll result, dxxx calculation)
+    # chat lines will be 3 lines long (--, [date, time] roller, chat text)
+    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use, 7 = raw, 8 = chat, 9 = concentration, 10 = error
     
     roll_len = len(roll_lines)
     roll_id = roll_lines[2]
@@ -84,106 +87,99 @@ def find_roll_type(roll_lines):
     skill_type = ""
     use_type = ""
     init_roll = 0.0
-    attack_keywords = ["Attack", "Claw", "Wing", "Bite", "Slam"]
+    attack_keywords = ["Attack", "Claw", "Wing", "Bite", "Slam", "2nd Claw", "Thwack"]
     save_keywords = ["Constitution", "Dexterity", "Wisdom"]
 
     init_check = [line for line in roll_lines if line.startswith('Initiative')]
+    if init_check:
+        roll_type = 1
+        # okay, looks like in 2024 Foundry changed how they were formatting initiative rolls on us, so we adjust accordingly
+        if(roll_id == "Initiative"):
+            init_roll = roll_lines[3]
+        else:
+            init_roll = float(roll_id)
+        # figure out d20 roll 
 
     for i in range (0, roll_len):
+        # note that while the actual attack roll itself may not start with "Attack" or it may start with "Weapon", there IS a line in most attacks that starts with the word "Attack" SOMEWHERE in the roll
         attack_check = any(roll_lines[i].startswith(keyword) for keyword in attack_keywords)
-        if attack_check == True:
+        if attack_check:
             roll_type = 5
+            # go to some sort of attack-figuring out function ig
             exit
 
-    for i in roll_id_split:
-        match i:
-            case "Saving" | "Throw": 
-                roll_type = 3
-                roll_id_split.remove("Saving")
-                roll_id_split.remove("Throw")
+    match roll_len:
+        case 3:
+            # this may be a chat message 
+            roll_type = 8 
+        case 4:
+            # this may be a raw roll
+            if(roll_id.isdecimal()):
+                roll_type = 7
+    
+    if not roll_type:
+        for i in roll_id_split:
+            match i:
+                case "Saving" | "Throw": 
+                    roll_type = 3
+                    roll_id_split.remove("Saving")
+                    roll_id_split.remove("Throw")
 
-                if len(roll_id_split) == 0:
-                    # if there's nothing left in the roll_id_split then we've found an old saving throw that doesn't specify and we have to figure it out
-                    # a Fortitude save will include mention of the roller's Constitution; Reflex, their Dexterity; and Will, their Wisdom 
+                    if len(roll_id_split) == 0:
+                        # if there's nothing left in the roll_id_split then we've found an old saving throw that doesn't specify and we have to figure it out
+                        # a Fortitude save will include mention of the roller's Constitution; Reflex, their Dexterity; and Will, their Wisdom 
                     
-                    for i in range(0,roll_len):
-                        save_check = any(roll_lines[i].startswith(keyword) for keyword in save_keywords)
-                        if save_check:
-                            save_type = roll_lines[i].split(" ")
-                            save_type = save_type[0]
-                            exit
-                        else:
-                            save_type = "Other"
+                        for i in range(0,roll_len):
+                            save_check = any(roll_lines[i].startswith(keyword) for keyword in save_keywords)
+                            if save_check:
+                                save_type = roll_lines[i].split(" ")
+                                save_type = save_type[0]
+                                exit
+                            else:
+                                save_type = "Other"
 
-                    match save_type:
-                        case "Constitution":
-                            saving_throw_type = "Fortitude"
-                        case "Dexterity":
-                            saving_throw_type = "Reflex"
-                        case "Wisdom":
-                            saving_throw_type = "Will"
-                        case _:
-                            saving_throw_type = "Save"
-                else: 
-                    saving_throw_type = roll_id_split
+                        match save_type:
+                            case "Constitution":
+                                saving_throw_type = "Fortitude"
+                            case "Dexterity":
+                                saving_throw_type = "Reflex"
+                            case "Wisdom":
+                                saving_throw_type = "Will"
+                            case _:
+                                saving_throw_type = "Save"
+                    else: 
+                        saving_throw_type = roll_id_split
                     
-            case "Concentration": 
-                # what roll_type are we giving these? shoving into untyped since it's not handled yet
-                roll_type = 0
+                case "Concentration": 
+                    # what roll_type are we giving these? shoving into untyped since it's not handled yet
+                    roll_type = 9
 
-            case "Skill": 
-                roll_type = 4
-                # now that we know it's a skill check, trim the list so only the type of skill check is left 
-                roll_id_split.remove("Skill")
-                roll_id_split.remove("Check")
-                length = len(roll_id_split)
-                if len(roll_id_split) > 1:
-                    skill_type = find_skill_type(roll_id_split)
-                else: 
-                    skill_type = roll_id_split[0]
+                case "Skill": 
+                    roll_type = 4
+                    # now that we know it's a skill check, trim the list so only the type of skill check is left 
+                    roll_id_split.remove("Skill")
+                    roll_id_split.remove("Check")
+                    length = len(roll_id_split)
+                    if len(roll_id_split) > 1:
+                        skill_type = find_skill_type(roll_id_split)
+                    else: 
+                        skill_type = roll_id_split[0]
 
-            case "(Use)" | "(Drink)":
-                roll_type = 6
-                if i == "(Use)":
-                    roll_id_split.remove("(Use)")
-                else: 
-                    roll_id_split.remove("(Drink)")
-                use_type = ' '.join(roll_id_split)
+                case "(Use)" | "(Drink)":
+                    roll_type = 6
+                    if i == "(Use)":
+                        roll_id_split.remove("(Use)")
+                    else: 
+                        roll_id_split.remove("(Drink)")
+                    use_type = ' '.join(roll_id_split)
 
-            case "Level" | "Up" | "Report":
-                roll_type = 2
+                case "Level" | "Up" | "Report":
+                    roll_type = 2
 
-            case _:
-                if roll_type > 0:
-                    roll_type = roll_type  
-                else: 
-                    # okay, if i the first roll is a decimal or a number with a decimal point, then it's either initiative or raw (or untyped?)
-                    init_list = i.split(".")
-                    if len(init_list) > 1:
-                        # if it's got a decimal point, that means it has a tiebreaker, so it's definitely initiative
-                        roll_type = 1
-                        init_roll = i
-        
-                    if i.isdecimal():
-                        # some older initiatives didn't have tiebreakers yet, so we have to differentiate what kind of roll this is
-                        # but initiative will be declared within the text of the roll so just take a peek
-                        init_check = [x for x in roll_lines if x.startswith('Initiative')]
-                        if init_check:
-                            roll_type = 1
-                            init_roll = i
-                        else:
-                            # OK, if it's not an initiative roll, it could be a raw roll. sometimes we just roll plain dice
-                            # if that's the case, then the roll will be formatted like ---/[Datetime] Roller/Result/1dxx = xx = xx
-                            # this is where we might count number of d20s or d100s rolled flat if we were so inclined 
-                            # anyway so the raw rolls are only like 4 lines long, so len of the roll's list should give us that
-                            if len(roll_lines) == 4:
-                                roll_type = 7
-                            else: 
-                                roll_type = 8
-
+                case _:
                     if roll_type == 0:
                         # k if it's still not changed then we missed it and screwed up
-                        roll_type = 8
+                        roll_type = 10
 
     return roll_type, saving_throw_type, skill_type, use_type, init_roll
 
@@ -294,6 +290,8 @@ def analyze_roll_stats(roll_stats):
     use_count = 0 
     raw_count = 0
     untyped_count = 0
+    chat_count = 0
+    conc_count = 0
     error_count = 0
     error_ids = []
 
@@ -317,19 +315,24 @@ def analyze_roll_stats(roll_stats):
                 use_count += 1
             case 7:
                 raw_count += 1
-            case 8 | _:
+            case 8:
+                chat_count += 1
+            case 9:
+                conc_count += 1 
+            case 10 | _:
                 error_count += 1
                 error_ids.append(id)
 
 
-    rolls_by_type = [untyped_count, init_rolled_count, levels_count, saves_count, skills_count, atks_count, use_count, raw_count, error_count]
+    rolls_by_type = [untyped_count, init_rolled_count, levels_count, saves_count, skills_count, atks_count, use_count, raw_count, chat_count, conc_count, error_count]
     
     return total_rolls, rolls_by_type, error_ids
 
 def main():
-    src_file =  "C:/Users/cdurham/PythonCode/personal/data/testslice.txt"
+    #src_file =  "C:/Users/cdurham/PythonCode/personal/data/testslice.txt"
+    src_file =  "C:/Users/cdurham/PythonCode/personal/data/FirstWorld_Mod.txt"
     #src_file = 'Data\TestSlice.txt'
-    src_file = 'Data\FirstWorld_Mod.txt'
+    #src_file = 'Data\FirstWorld_Mod.txt'
     roll_id = 0
     roll_raws = {
         roll_id: []
@@ -346,11 +349,11 @@ def main():
     # let's get some stats just because
     total_rolls, rolls_by_type, error_ids = analyze_roll_stats(roll_stats)
     print("Total rolls: ", total_rolls)
-    print("Rolls by type: Untyped, Initiative, Level Ups, Saving Throws, Skill Checks, Attacks, Spells/Class Features/Items Used, Raw, Error")
+    print("Rolls by type: Untyped, Initiative, Level Ups, Saving Throws, Skill Checks, Attacks, Spells/Class Features/Items Used, Raw, Chat, Concentration Checks, Error")
     print(rolls_by_type)
 
-    #for id in error_ids:
-       # print(roll_raws[id])
+    for id in error_ids:
+        print(roll_raws[id])
 
 
 main()
