@@ -66,7 +66,7 @@ def find_roll_date(txt):
     return roll_date
 
 def find_roll_type(roll_lines):
-   # TODO 
+    # TODO 
     # Differentiate saving throws if the system doesn't do that for us
     # Figure out attacks, spells/feature/item uses, initiative, concentration checks
     # count # of d20, d100s rolled 
@@ -76,7 +76,8 @@ def find_roll_type(roll_lines):
     # we'll figure out initiative and attacks from context clues on other lines
     # raw rolls will be 4 lines long (--, [date, time] roller, roll result, dxxx calculation)
     # chat lines will be 3 lines long (--, [date, time] roller, chat text)
-    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use, 7 = raw, 8 = chat, 9 = concentration, 10 = error
+    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use, 7 = raw, 8 = chat, 9 = concentration, 10 = ability test
+    # 11 = combat maneuver, 12 = melee attack, 13 = ranged attack, 14 = caster level check, 15 = showoff, 16 = error 
     
     roll_len = len(roll_lines)
     roll_id = roll_lines[2]
@@ -89,15 +90,18 @@ def find_roll_type(roll_lines):
     init_roll = 0.0
     attack_keywords = ["Attack", "Claw", "Wing", "Bite", "Slam", "2nd Claw", "Thwack"]
     save_keywords = ["Constitution", "Dexterity", "Wisdom"]
+    show_keywords = ["School", "Source", "Description"]
+    count_clc = 0
 
     init_check = [line for line in roll_lines if line.startswith('Initiative')]
     if init_check:
         roll_type = 1
         # okay, looks like in 2024 Foundry changed how they were formatting initiative rolls on us, so we adjust accordingly
-        if(roll_id == "Initiative"):
-            init_roll = roll_lines[3]
-        else:
-            init_roll = float(roll_id)
+        #if(roll_id == "Initiative"):
+            # hey jackass are you really assigning some of these to be floats and some to be like. something else. that's gonna bite you 
+           # init_roll = roll_lines[3]
+        #else:
+            #init_roll = float(roll_id)
         # figure out d20 roll 
 
     for i in range (0, roll_len):
@@ -116,8 +120,10 @@ def find_roll_type(roll_lines):
             # this may be a raw roll
             if(roll_id.isdecimal()):
                 roll_type = 7
+        case _:
+            roll_type = roll_type
     
-    if not roll_type:
+    if roll_type == 0:
         for i in roll_id_split:
             match i:
                 case "Saving" | "Throw": 
@@ -151,7 +157,6 @@ def find_roll_type(roll_lines):
                         saving_throw_type = roll_id_split
                     
                 case "Concentration": 
-                    # what roll_type are we giving these? shoving into untyped since it's not handled yet
                     roll_type = 9
 
                 case "Skill": 
@@ -173,14 +178,37 @@ def find_roll_type(roll_lines):
                         roll_id_split.remove("(Drink)")
                     use_type = ' '.join(roll_id_split)
 
-                case "Level" | "Up" | "Report":
+                case "Up" | "Report":
                     roll_type = 2
 
+                case "Ability" | "Test":
+                    roll_type = 10
+
+                case "Combat" | "Maneuver" | "Bonus": 
+                    roll_type = 11
+                    # need to check if CMB or CMD? 
+                
+                case "Melee":
+                    roll_type = 12
+                
+                case "Ranged":
+                    roll_type = 13
+                
+                case "Caster":
+                    roll_type = 14
+                    #count_clc += 1
                 case _:
                     if roll_type == 0:
-                        # k if it's still not changed then we missed it and screwed up
-                        roll_type = 10
-
+                        for i in range(0, roll_len):
+                            show_check = any(roll_lines[i].startswith(keyword) for keyword in show_keywords)
+                            if show_check:
+                                roll_type = 15
+                                exit
+                    if roll_type == 0:
+                        roll_type = 16
+    
+    #if count_clc:
+        #print(roll_id, roll_type)
     return roll_type, saving_throw_type, skill_type, use_type, init_roll
 
 def find_skill_type(roll_id_list):
@@ -238,7 +266,7 @@ def roll_handler(roll_raws):
     # the 0th string in the list is a bunch of --s 
     # the 1st string contains datetime and roller info
     # the 2nd string will be our primary identifier for type of roll 
-    roll_id = len(roll_raws.keys())
+    roll_id = 0
     roll_stats = {
         roll_id: []
     }
@@ -249,7 +277,6 @@ def roll_handler(roll_raws):
         roll_date = find_roll_date(roll_info[1])
         roll_type, saving_throw_type, skill_type, use_type, init_roll = find_roll_type(roll_info)
         roll_stats[id] = [roller, roll_date, roll_type, saving_throw_type, skill_type, use_type, init_roll]
-        # print(roll_stats[id])
     return roll_stats
 
 def pull_rolls(src_file):
@@ -260,28 +287,26 @@ def pull_rolls(src_file):
     first_line_flag = True
 
     with open(src_file) as f:
-        first_roll_flag = True 
-
         for line in f: 
             txt = line.strip()
 
             # if it's our first roll there won't be -- before it
             if roll_id == 0 and first_line_flag: 
-                roll_raws[roll_id].append("")
+                roll_raws[roll_id].append("---------------------------")
                 first_line_flag = False
 
             # if the first char of txt is - then it's a new roll 
             if txt.startswith("--"):
                 roll_id += 1
-                roll_raws[roll_id] = [txt] 
-                                  
+                roll_raws[roll_id] = [txt]                     
             else:
                 roll_raws[roll_id].append(txt)       
     return roll_raws
 
 def analyze_roll_stats(roll_stats):
-    total_rolls = len(roll_stats.keys())
-    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use 7 = raw 8 = error
+    total_rolls = len(roll_stats.keys())-1
+    # types: 0 = untyped, 1 = initiative, 2 = level up report, 3 = saving throw, 4 = skill check, 5 = attack, 6 = spell/item/feature use, 7 = raw, 8 = chat, 9 = concentration, 10 = ability test
+    # 11 = combat maneuver, 12 = melee attack, 13 = ranged attack, 14 = caster level check, 15 = error 
     init_rolled_count = 0
     levels_count = 0
     saves_count = 0
@@ -292,10 +317,16 @@ def analyze_roll_stats(roll_stats):
     untyped_count = 0
     chat_count = 0
     conc_count = 0
+    ability_count = 0 
+    combman_count = 0
+    melee_count = 0
+    ranged_count = 0
+    clc_count = 0
+    show_count = 0
     error_count = 0
     error_ids = []
 
-    for id in range(0,total_rolls-1):
+    for id in range(0,total_rolls):
         roll_info = roll_stats[id]
         roll_type = roll_info[2]
         match roll_type:
@@ -319,20 +350,34 @@ def analyze_roll_stats(roll_stats):
                 chat_count += 1
             case 9:
                 conc_count += 1 
-            case 10 | _:
+            case 10:
+                ability_count += 1
+            case 11:
+                combman_count += 1
+            case 12:
+                melee_count += 1
+            case 13:
+                ranged_count += 1
+            case 14:
+                clc_count += 1
+            case 15:
+                show_count += 1
+            case 16 | _:
                 error_count += 1
                 error_ids.append(id)
+    sum_count = untyped_count + init_rolled_count + levels_count + saves_count + skills_count + atks_count + use_count + raw_count + chat_count 
+    sum_count = sum_count + conc_count + ability_count + combman_count + melee_count + ranged_count + clc_count + error_count
 
-
-    rolls_by_type = [untyped_count, init_rolled_count, levels_count, saves_count, skills_count, atks_count, use_count, raw_count, chat_count, conc_count, error_count]
+    rolls_by_type = [untyped_count, init_rolled_count, levels_count, saves_count, skills_count, atks_count, use_count, raw_count, chat_count, 
+                     conc_count, ability_count, combman_count, melee_count, ranged_count, clc_count, show_count, error_count]
     
     return total_rolls, rolls_by_type, error_ids
 
 def main():
     #src_file =  "C:/Users/cdurham/PythonCode/personal/data/testslice.txt"
-    src_file =  "C:/Users/cdurham/PythonCode/personal/data/FirstWorld_Mod.txt"
+    #src_file =  "C:/Users/cdurham/PythonCode/personal/data/FirstWorld_Mod.txt"
     #src_file = 'Data\TestSlice.txt'
-    #src_file = 'Data\FirstWorld_Mod.txt'
+    src_file = 'Data\FirstWorld_Mod.txt'
     roll_id = 0
     roll_raws = {
         roll_id: []
@@ -340,17 +385,25 @@ def main():
 
     # first, we pull the rolls from the text file into a dict 
     roll_raws = pull_rolls(src_file)
+    #print(len(roll_raws))
 
     # now that we've got the data pulled out, let's call roll handler 
     # roll handler is going to return information about the rolls
     # for now let's try to get datetime, roller, and roll type
     roll_stats = roll_handler(roll_raws)
+    #print(len(roll_stats))
 
     # let's get some stats just because
+    roll_types = ["Untyped", "Initiative", "Level Up", "Saving Throw", "Skill Check", "Attack", "Spell/Class Feat/Item Used", "Raw Roll", "Chat Message", 
+                  "Concentration Check", "Ability Test", "Combat Maneuver", "Melee Attack", "Ranged Attack", "Caster Level Check", "Showoff", "Error"]
     total_rolls, rolls_by_type, error_ids = analyze_roll_stats(roll_stats)
     print("Total rolls: ", total_rolls)
-    print("Rolls by type: Untyped, Initiative, Level Ups, Saving Throws, Skill Checks, Attacks, Spells/Class Features/Items Used, Raw, Chat, Concentration Checks, Error")
-    print(rolls_by_type)
+    sum_total = 0
+    for i in range(0,len(roll_types)):
+        sum_total += rolls_by_type[i]
+        print(roll_types[i], rolls_by_type[i])
+        i+=1
+    print("Total rolls: ", sum_total)
 
     for id in error_ids:
         print(roll_raws[id])
