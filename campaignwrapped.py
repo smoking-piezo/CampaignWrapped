@@ -4,15 +4,11 @@
 
 # TODO 
 # what kind of data type to hold a shitton of rolls? 
-# don't forget, you've fucked with the data in testslice.txt for testing purposes... FirstWorld.txt is the original, don't fuck with it
+# upload an anyonyized chat log dataset
 # finding nat 20s or 1s: look for the only roll line that has the = sign in it, and it should be the first integer to the right of the = 
 # note that iterative attacks might be frustrating here: claws 2 # damage etc
-# future attacks: Valeric's special macros and criticals
-# theory: chat messages that are only 0-2 len are just like words we put in chat
 # jump off find_roller to create characters or attribute a roll to an existing character? we should pass the whole roll to find_roller then
-# another type of roll: CMB/CMD, "damage" (see 9/5/2022, 8:26:47), $stat Ability Test, 
 # potential error: foundry stopped formatting the d20 roll properly here?? 9/26/2022, 8:28:50 PM
-# Zen shared the spell instead of casting it, how to handle 10/7/2022, 8:02:29
 
 
 from dataclasses import dataclass
@@ -98,7 +94,7 @@ def find_roll_type(roll_lines):
         roll_type = 1
         # okay, looks like in 2024 Foundry changed how they were formatting initiative rolls on us, so we adjust accordingly
         #if(roll_id == "Initiative"):
-            # hey jackass are you really assigning some of these to be floats and some to be like. something else. that's gonna bite you 
+            # double-check this typing here
            # init_roll = roll_lines[3]
         #else:
             #init_roll = float(roll_id)
@@ -374,10 +370,8 @@ def analyze_roll_stats(roll_stats):
     return total_rolls, rolls_by_type, error_ids
 
 def main():
-    #src_file =  "C:/Users/cdurham/PythonCode/personal/data/testslice.txt"
-    #src_file =  "C:/Users/cdurham/PythonCode/personal/data/FirstWorld_Mod.txt"
-    #src_file = 'Data\TestSlice.txt'
-    src_file = 'Data\FirstWorld_Mod.txt'
+    # fix this line 
+    src_file = ''
     roll_id = 0
     roll_raws = {
         roll_id: []
