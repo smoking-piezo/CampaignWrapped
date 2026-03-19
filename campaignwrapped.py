@@ -17,10 +17,9 @@ import datetime
 
 @dataclass
 class roll():
-    uid: int
-    date: datetime
-    roller: str
-    type: int
+    date_time : datetime
+    roller : str 
+    type : object 
 
 class character():
     name: str
@@ -63,7 +62,6 @@ def find_roll_date(txt):
 
 def find_roll_type(roll_lines):
     # TODO 
-    # Differentiate saving throws if the system doesn't do that for us
     # Figure out attacks, spells/feature/item uses, initiative, concentration checks
     # count # of d20, d100s rolled 
 
@@ -193,6 +191,10 @@ def find_roll_type(roll_lines):
                 case "Caster":
                     roll_type = 14
                     #count_clc += 1
+
+                case "Defenses":
+                    roll_type = 16
+            
                 case _:
                     if roll_type == 0:
                         for i in range(0, roll_len):
@@ -201,7 +203,7 @@ def find_roll_type(roll_lines):
                                 roll_type = 15
                                 exit
                     if roll_type == 0:
-                        roll_type = 16
+                        roll_type = 17
     
     #if count_clc:
         #print(roll_id, roll_type)
@@ -319,6 +321,7 @@ def analyze_roll_stats(roll_stats):
     ranged_count = 0
     clc_count = 0
     show_count = 0
+    defenses_count = 0
     error_count = 0
     error_ids = []
 
@@ -358,20 +361,21 @@ def analyze_roll_stats(roll_stats):
                 clc_count += 1
             case 15:
                 show_count += 1
-            case 16 | _:
+            case 16:
+                defenses_count += 1
+            case 17 | _:
                 error_count += 1
                 error_ids.append(id)
     sum_count = untyped_count + init_rolled_count + levels_count + saves_count + skills_count + atks_count + use_count + raw_count + chat_count 
-    sum_count = sum_count + conc_count + ability_count + combman_count + melee_count + ranged_count + clc_count + error_count
+    sum_count = sum_count + conc_count + ability_count + combman_count + melee_count + ranged_count + clc_count + show_count + defenses_count + error_count
 
     rolls_by_type = [untyped_count, init_rolled_count, levels_count, saves_count, skills_count, atks_count, use_count, raw_count, chat_count, 
-                     conc_count, ability_count, combman_count, melee_count, ranged_count, clc_count, show_count, error_count]
+                     conc_count, ability_count, combman_count, melee_count, ranged_count, clc_count, show_count, defenses_count, error_count]
     
     return total_rolls, rolls_by_type, error_ids
 
 def main():
-    # fix this line 
-    src_file = ''
+    src_file = 'Data\TestSlice.txt'
     roll_id = 0
     roll_raws = {
         roll_id: []
@@ -389,7 +393,7 @@ def main():
 
     # let's get some stats just because
     roll_types = ["Untyped", "Initiative", "Level Up", "Saving Throw", "Skill Check", "Attack", "Spell/Class Feat/Item Used", "Raw Roll", "Chat Message", 
-                  "Concentration Check", "Ability Test", "Combat Maneuver", "Melee Attack", "Ranged Attack", "Caster Level Check", "Showoff", "Error"]
+                  "Concentration Check", "Ability Test", "Combat Maneuver", "Melee Attack", "Ranged Attack", "Caster Level Check", "Showoff", "Defenses", "Error"]
     total_rolls, rolls_by_type, error_ids = analyze_roll_stats(roll_stats)
     print("Total rolls: ", total_rolls)
     sum_total = 0
@@ -399,8 +403,10 @@ def main():
         i+=1
     print("Total rolls: ", sum_total)
 
-    for id in error_ids:
-        print(roll_raws[id])
+    # the rest of these rolls in the log are mostly just showoff rolls maybe just cheat and brute force them. who's gonna know
+    # non-showoff rolls in the remaining errors include keywords "vile" "special attack" 
+    #for id in error_ids:
+       # print(roll_raws[id])
 
 
 main()
