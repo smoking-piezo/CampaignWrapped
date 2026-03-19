@@ -10,6 +10,10 @@ class roll():
     roll_type: object
     roll_lines: list
 
+class roll_type:
+    # we don't know what kind of roll this is gonna be so here's a placeholder 
+    roll_type = "Unknown"
+
 class attack_roll:
     roll_type = "Attack"
 
@@ -46,9 +50,10 @@ def main():
 
     
     # do we have to know the type of roll when we create the roll this way?
-    roll_box.append(roll(a_roll[1],a_roll[2], attack_roll, a_roll))
+    roll_box.append(roll(a_roll[1],a_roll[2], roll_type, a_roll))
 
     a_roll_type = roll_box[0].roll_type
+    a_roll_type = a_roll_type.roll_type
 
     print(a_roll_type)
 
@@ -58,9 +63,9 @@ def main():
 
     a_roll_type = roll_box[0].roll_type
 
-    a_roll_type = a_roll_type.dmg_d20
+    a_roll_dmg = a_roll_type.dmg_d20
 
-    print(a_roll_type)
+    print(a_roll_type, a_roll_dmg)
 
 
 
