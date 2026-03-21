@@ -12,9 +12,10 @@ class log_entry():
 
 class dice_roll(log_entry):
 
-    def __init__(self, date_time, roller, log_lines, roll_type):
+    def __init__(self, date_time, roller, log_lines, roll_type="Unknown"):
         super().__init__(date_time, roller, log_lines)
-        roll_type = "Unknown"
+        if roll_type:
+            self.roll_type = roll_type
 
 
 
