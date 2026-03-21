@@ -5,11 +5,17 @@ import datetime
 
 @dataclass
 class log_entry():
-    def __init__(self, date_time, roller, entry_type, log_lines):
+    acceptable_types = ["Unknown", "Initiative", "Attack"]
+    def __init__(self, date_time, roller, log_lines, entry_type, roll_bin=[]):
         self.date_time = date_time
         self.roller = roller
-        self.entry_type = entry_type
         self.log_lines = log_lines 
+        self.roll_bin = roll_bin
+        self.roll_count = len(roll_bin)
+        if entry_type in self.acceptable_types:
+            self.entry_type = entry_type
+        else:
+            self.entry_type = "Unknown"
        
 
 class dice_roll(log_entry):
@@ -47,9 +53,9 @@ def main():
         entry_date = log[i][1]
         entry_roller = log[i][2]
         entry_log = log[i]
-        entries.append(log_entry(entry_date,entry_roller,entry_log))
+        entries.append(log_entry(entry_date,entry_roller, "Unknown", entry_log))
 
-    entries[1]=dice_roll(entries[1].date_time, entries[1].roller,entries[1].log_lines, 1, "Attack")
+    #entries[1]=dice_roll(entries[0].date_time, entries[0].roller,entries[0].log_lines, 1, "Attack")
     #entries[0]=d20_roll(entries[0].date_time, entries[0].roller, entries[0].log_lines, 1, "Skill", 15, 15)
 
     #new_entry = d20_roll((2025,1,1),"doggo",["list of lines"],"Save Throw", 20, 30)
@@ -69,10 +75,14 @@ def main():
     iter_atk_dice.append(atk_2)
     iter_atk_dice.append(atk_3)
 
-    iter_atk = d20_roll((2026,12,5), "attacker", new_entry, "Attack", iter_atk_dice)
+    #iter_atk = d20_roll((2026,12,5), "attacker", new_entry, "Attack", iter_atk_dice)
 
-    print(iter_atk.die_roll_quant)
-    print(iter_atk.die_rolls_list)
+    entry_test = log_entry(entries[0].date_time, "Actor", new_entry, "Attack", iter_atk_dice)
+
+    print(entry_test.date_time, entry_test.roll_count, entry_test.entry_type)
+
+    #print(iter_atk.die_roll_quant)
+    #print(iter_atk.die_rolls_list)
 
     #print(atk_1.dx_result)
     #print(atk_2.effect_roll,atk_2.result_w_mods)
