@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import datetime
 #import pandas as pd
 
-global src_file, roll_id, roller, roll_date, roll_id_flag, roll_type, roll_raws
+global src_file
 
 @dataclass
 
@@ -23,6 +23,13 @@ class log_entry():
         self.roll_bin = self.roll_bin
         self.roll_count = len(self.roll_bin)
         return self.roll_bin
+    
+    def update_type(self, roll_type):
+        if roll_type in self.acceptable_types:
+            self.entry_type = roll_type
+        else: 
+            self.entry_type = "Unknown"
+        return self.entry_type
 
     def __init__(self, date_time, actor, log_lines, entry_type, roll_bin=[]):
         self.date_time = date_time
@@ -85,32 +92,52 @@ def initialize_roll(log):
     # so initially this function was just intended to find the TYPE of roll in the log, but 
     # now I think we need to also initialize the roll fully. which is to say: 
     # make sure all the dice objects associated with a roll are loaded into the log entry 
-    roll_id = log.log_lines[2]
+roll_id = log.log_lines[2]
+    roll_id_split = roll_id.split(" ")
     roll_lines = log.log_lines
 
     attack_keywords = ["Attack", "Claw", "Wing", "Bite", "Slam", "2nd Claw", "Thwack"]
     save_keywords = ["Fortitude", "Reflex", "Will", "Saving Throw"]
     show_keywords = ["School", "Source", "Description", "Price"]
 
-
     init_check = [line for line in log.log_lines if line.startswith('Initiative')]
     if init_check: 
-        roll_type = "Initiative"
         init_init_roll(log)
         return 
-    
+    '''
+    for keyword in roll_id_split:
+        match keyword:
+            case "Saving" | "Throw":
+                init_save_roll(log)
+                return
+            case "Concentration":
+                init_generic_roll(log, "Concentration Check")
+            case "Skill":
+                init_skill_check(log)
+            case "(Use)" | "(Drink)":
+                init_use_save_roll(log)
+            case "Up" | "Report"
+                init_level_up(log)
+            case "Ability" | "Test": 
+                init_generic_roll(log, "Ability Test")
+            case "Melee" | "Ranged":
+                init_attack(log)
+            case "Caster":
+                init_generic_roll(log, "Caster Level Check")
+            case "Defenses":
+                init_message(log)
+
     for line in range(0, len(roll_lines)):
         attack_check = any(roll_lines[line].startswith(keyword) for keyword in attack_keywords)
-        save_check = any(roll_lines[line].startswith(keyword) for keyword in save_keywords)
+        show_check = any(roll_lines[line].startswith(keyword) for keyword in show_keywords)
         
         if attack_check:
-            roll_type = "Attack"
+            init_attack(log)
             return 
         
-        if save_check: 
-            roll_type = "Saving Throw" 
-            return
-
+        if show_check:
+            init_message(log)
+    '''
     return
 
 def init_init_roll(log):
@@ -131,7 +158,7 @@ def init_init_roll(log):
 
     init_roll = die_roll(dx_type, dx_result, result_w_mods)
 
-    log.entry_type = "Initiative"
+    log.update_type("Initiative")
     log.add_roll(init_roll)
     
     return
