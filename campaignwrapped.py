@@ -104,12 +104,15 @@ def initialize_roll(log):
     if init_check: 
         init_init_roll(log)
         return 
-    '''
+    
     for keyword in roll_id_split:
         match keyword:
             case "Saving" | "Throw":
                 init_save_roll(log)
                 return
+            case _:
+                return
+        '''
             case "Concentration":
                 init_generic_roll(log, "Concentration Check")
             case "Skill":
@@ -138,14 +141,45 @@ def initialize_roll(log):
         if show_check:
             init_message(log)
     '''
+
+def init_save_roll(log):
+    roll_lines = log.log_lines
+    roll_id = roll_lines[2]
+    roll_len = len(roll_lines)
+    save_keywords = ["Constitution", "Dexterity", "Wisdom"]
+    saving_throw_type = ""
+
+    if roll_id.startswith("Saving"):
+        # if it starts with "Saving Throw" then we need to figure out what kind of save it is from other clues
+        for i in range(0,roll_len):
+            # the below line is NOT catching the lines it should be 
+            save_check = any(roll_lines[i].startswith(keyword) for keyword in save_keywords)
+            if save_check:
+                save_type = roll_lines[i].split(" ")
+                save_type = save_type[0]
+                exit
+            else:
+                save_type = "Other"
+
+        match save_type:
+            case "Constitution":
+                saving_throw_type = "Fortitude Saving Throw"
+            case "Dexterity":
+                saving_throw_type = "Reflex Saving Throw"
+            case "Wisdom":
+                saving_throw_type = "Will Saving Throw"
+            case _:
+                saving_throw_type = "Unknown Saving Throw"
+    else:
+        saving_throw_type = roll_id
+
+    log.update_type(saving_throw_type)
     return
 
 def init_init_roll(log):
     # to initialize an initiative roll, we need to get the associated dice roll 
     # this will probably be in the last line which starts with 1d20
     # we want to add the d20 roll and the result roll with modifiers 
-
-    roll_lines = log.log_lines
     result_line = [line for line in log.log_lines if line.startswith('1d20') and "=" in line]
 
     result_line = result_line[0].split("=")
