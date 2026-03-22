@@ -11,7 +11,8 @@ global src_file
 @dataclass
 
 class log_entry():
-    acceptable_types = ["Unknown", "Initiative", "Level Up", "Saving Throw", "Skill Check", "Attack",
+    acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
+                        "Fortitude Saving Throw", 'Unknown Saving Throw', "Skill Check", "Attack",
                         "Spell Cast", "Item / Potion Used", "Raw Roll", "Chat Message", "Ability Test",
                         "Combat Maneuver", "Caster Level Check", "Defenses", "Error"]
     
