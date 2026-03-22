@@ -92,7 +92,7 @@ def initialize_roll(log):
     # so initially this function was just intended to find the TYPE of roll in the log, but 
     # now I think we need to also initialize the roll fully. which is to say: 
     # make sure all the dice objects associated with a roll are loaded into the log entry 
-roll_id = log.log_lines[2]
+    roll_id = log.log_lines[2]
     roll_id_split = roll_id.split(" ")
     roll_lines = log.log_lines
 
