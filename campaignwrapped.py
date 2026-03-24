@@ -16,13 +16,20 @@ class actor():
         else:
             self.logs_bin = [log_entry]
         self.logs_count = len(self.logs_bin)
-        return self.logs_bin, self.logs_count
+        self.roll_count = self.roll_count + log_entry.roll_count
+        return self.logs_bin, self.logs_count, self.roll_count
 
     def __init__(self, name, player, logs_bin=[]):
         self.name = name
         self.player = player 
         self.logs_bin = logs_bin
         logs_count = len(logs_bin)
+        if logs_count > 0:
+            for i in range(0,logs_count): 
+                roll_count += logs_bin[i].roll_count
+        else:
+            roll_count = 0
+        self.roll_count = roll_count
 
 class log_entry():
     acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
@@ -273,15 +280,19 @@ def main():
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin)
 
-    char1 = actor("Tihana", "M1")
+    char1 = actor("Namielle", "Z1")
 
     for i in range(0, len(log_bin)):
         if log_bin[i].roll_count > 1:
             print(log_bin[i].entry_type)
-        if log_bin[i].actor == "Tihana":
+        if log_bin[i].actor == "Namielle":
             #print(log_bin[i].entry_type, log_bin[i].actor, "threw a", log_bin[i].roll_bin[0].dx_result)
             char1.add_log(log_bin[i])
             
-    print(char1.logs_bin[2].actor)
+  
+    for i in range (0, char1.logs_count):
+        if char1.logs_bin[i].entry_type == "Initiative":
+            print(char1.logs_bin[i].actor, "threw a", char1.logs_bin[i].roll_bin[0].dx_result)
+    print(char1.logs_count)
 
 main()
