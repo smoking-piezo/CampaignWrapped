@@ -9,6 +9,22 @@ import datetime
 global src_file
 
 @dataclass
+class actor():
+    def add_log(self, log_entry):
+        if self.logs_bin:
+            logs_bin = self.logs_bin
+            logs_bin = logs_bin.append(log_entry)
+            self.logs_bin = logs_bin
+        else:
+            self.logs_bin = [log_entry]
+        self.logs_count = len(self.logs_bin)
+        return self.logs_bin, self.logs_count
+
+    def __init__(self, name, player, logs_bin=[]):
+        self.name = name
+        self.player = player 
+        self.logs_bin = logs_bin
+        logs_count = len(logs_bin)
 
 class log_entry():
     acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
@@ -23,11 +39,13 @@ class log_entry():
             self.roll_bin = [roll_object]
         self.roll_bin = self.roll_bin
         self.roll_count = len(self.roll_bin)
-        return self.roll_bin
+        return self.roll_bin, self.roll_count
     
     def update_type(self, roll_type):
         if roll_type in self.acceptable_types:
             self.entry_type = roll_type
+        elif roll_type:
+            self.entry_type = "Error"
         else: 
             self.entry_type = "Unknown"
         return self.entry_type
@@ -149,6 +167,7 @@ def init_save_roll(log):
     roll_len = len(roll_lines)
     save_keywords = ["Constitution", "Dexterity", "Wisdom"]
     saving_throw_type = ""
+    i = 0
 
     if roll_id.startswith("Saving"):
         # if it starts with "Saving Throw" then we need to figure out what kind of save it is from other clues
@@ -158,7 +177,7 @@ def init_save_roll(log):
             if save_check:
                 save_type = roll_lines[i].split(" ")
                 save_type = save_type[0]
-                exit
+                break
             else:
                 save_type = "Other"
 
@@ -174,17 +193,34 @@ def init_save_roll(log):
     else:
         saving_throw_type = roll_id
 
+    dx_type = "d20"
+
+    # in the old log some of the early result lines got messed up and only the modified result is available 
+    # but the d20 roll is still there, just on a different line than expected 
+    dx_result_line = [line for line in roll_lines if line.startswith('1d20')]
+    dx_result_line = dx_result_line[0].split(" ")
+    dx_result = int(dx_result_line[1].strip())
+
+    mod_result_line = [line for line in roll_lines if "=" in line]
+    mod_result_line = mod_result_line[0].split("=")
+    result_w_mods = int(mod_result_line[2].strip())
+
+    save_roll = die_roll(dx_type, dx_result, result_w_mods)
+
     log.update_type(saving_throw_type)
+    log.add_roll(save_roll)
+    
     return
+
 
 def init_init_roll(log):
     # to initialize an initiative roll, we need to get the associated dice roll 
     # this will probably be in the last line which starts with 1d20
     # we want to add the d20 roll and the result roll with modifiers 
+
     result_line = [line for line in log.log_lines if line.startswith('1d20') and "=" in line]
 
     result_line = result_line[0].split("=")
-
 
     dx_type = "d20"
     split_result_line = result_line[1].split("+")
@@ -204,6 +240,7 @@ def log_handler(log_bin):
         log.actor = find_actor(log.log_lines)
         # return something here? 
         initialize_roll(log)
+
     return log_bin
 
 def pull_log_lines(src_file):
@@ -232,14 +269,19 @@ def pull_log_lines(src_file):
     return log_bin
 
 def main():
-    src_file = 'Data\TestSlice.txt'
+    #src_file = 'Data\TestSlice.txt'
     log_bin = []
 
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin)
 
-    #for i in range(0, len(log_bin)):
-        #print(log_bin[i].entry_type, log_bin[i].roll_count)
+    char1 = actor("Tihana", "M1")
 
+    for i in range(0, len(log_bin)):
+        if log_bin[i].actor == "Tihana":
+            #print(log_bin[i].entry_type, log_bin[i].actor, "threw a", log_bin[i].roll_bin[0].dx_result)
+            char1.add_log(log_bin[i])
+            
+    print(char1.logs_bin[2].actor)
 
 main()
