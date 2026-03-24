@@ -12,9 +12,7 @@ global src_file
 class actor():
     def add_log(self, log_entry):
         if self.logs_bin:
-            logs_bin = self.logs_bin
-            logs_bin = logs_bin.append(log_entry)
-            self.logs_bin = logs_bin
+            self.logs_bin.append(log_entry)
         else:
             self.logs_bin = [log_entry]
         self.logs_count = len(self.logs_bin)
@@ -278,6 +276,8 @@ def main():
     char1 = actor("Tihana", "M1")
 
     for i in range(0, len(log_bin)):
+        if log_bin[i].roll_count > 1:
+            print(log_bin[i].entry_type)
         if log_bin[i].actor == "Tihana":
             #print(log_bin[i].entry_type, log_bin[i].actor, "threw a", log_bin[i].roll_bin[0].dx_result)
             char1.add_log(log_bin[i])
