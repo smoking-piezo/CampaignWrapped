@@ -9,6 +9,23 @@ import datetime
 global src_file
 
 @dataclass
+class player():
+    def add_actor(self, actor_name):
+        actor_exists = isinstance(actor_name, actor)
+        if actor_exists:
+            if actor_name not in self.actors_list:
+                self.actors_list.append(actor_name)
+        else:
+            pass
+        return self.actors_list
+        
+    def __init__(self, name, campaigns_list, actors_list):
+        self.actors_list = []
+        self.name = name
+        self.campaigns_list = campaigns_list
+        for actor_name in range(0, len(actors_list)):
+            self.add_actor(actors_list[actor_name])
+            
 class actor():
     def add_log(self, log_entry):
         if self.logs_bin:
@@ -17,7 +34,14 @@ class actor():
             self.logs_bin = [log_entry]
         self.logs_count = len(self.logs_bin)
         self.roll_count = self.roll_count + log_entry.roll_count
-        return self.logs_bin, self.logs_count, self.roll_count
+
+        if log_entry.nat_one_count: 
+            self.nat_one_count += log_entry.nat_one_count
+        if log_entry.nat_twenty_count:
+            self.nat_twenty_count += log_entry.nat_twenty_count
+        if log_entry.nat_hundred_count:
+            self.nat_hundred_count += log_entry.nat_hundred_count
+        return self.logs_bin, self.logs_count, self.roll_count, self.nat_one_count, self.nat_twenty_count, self.nat_hundred_count
 
     def __init__(self, name, player, logs_bin=[]):
         self.name = name
@@ -30,6 +54,9 @@ class actor():
         else:
             roll_count = 0
         self.roll_count = roll_count
+        self.nat_one_count = 0
+        self.nat_twenty_count = 0
+        self.nat_hundred_count = 0
 
 class log_entry():
     acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
@@ -44,7 +71,15 @@ class log_entry():
             self.roll_bin = [roll_object]
         self.roll_bin = self.roll_bin
         self.roll_count = len(self.roll_bin)
-        return self.roll_bin, self.roll_count
+
+        if roll_object.nat_one_flag:
+            self.nat_one_count += 1
+        if roll_object.nat_twenty_flag:
+            self.nat_twenty_count += 1
+        if roll_object.nat_hundred_flag:
+            self.nat_hundred_count += 1
+
+        return self.roll_bin, self.roll_count, self.nat_one_count, self.nat_twenty_count, self.nat_hundred_count
     
     def update_type(self, roll_type):
         if roll_type in self.acceptable_types:
@@ -61,6 +96,9 @@ class log_entry():
         self.log_lines = log_lines 
         self.roll_bin = roll_bin
         self.roll_count = len(roll_bin)
+        self.nat_one_count = 0
+        self.nat_twenty_count = 0
+        self.nat_hundred_count = 0
         if entry_type in self.acceptable_types:
             self.entry_type = entry_type
         elif entry_type:
@@ -76,6 +114,24 @@ class die_roll():
             self.result_w_mods = result_w_mods
         else: 
             self.result_w_mods = dx_result
+
+        self.nat_one_flag, self.nat_twenty_flag, self.nat_hundred_flag = self.notable_rolls(dx_type, dx_result)
+    
+    def notable_rolls(self, dx_type, dx_result):
+        nat_one_flag = False
+        nat_twenty_flag = False
+        nat_hundred_flag = False
+
+        if dx_result == 1:
+            nat_one_flag = True
+        
+        if dx_result == 20 and dx_type == "d20":
+            nat_twenty_flag = True
+        
+        if dx_result == 100 and dx_type == "d100":
+            nat_hundred_flag = True
+
+        return nat_one_flag, nat_twenty_flag, nat_hundred_flag
 
 def find_actor(log_lines):
     txt = log_lines[1]
@@ -280,7 +336,9 @@ def main():
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin)
 
+    player1 = player("Z1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], ["Namielle", "Ercia Kash"])
     char1 = actor("Namielle", "Z1")
+    char2 = actor("Gage", "D1")
 
     for i in range(0, len(log_bin)):
         if log_bin[i].roll_count > 1:
@@ -288,11 +346,14 @@ def main():
         if log_bin[i].actor == "Namielle":
             #print(log_bin[i].entry_type, log_bin[i].actor, "threw a", log_bin[i].roll_bin[0].dx_result)
             char1.add_log(log_bin[i])
+        if log_bin[i].actor == "Gage":
+            char2.add_log(log_bin[i])
             
   
-    for i in range (0, char1.logs_count):
-        if char1.logs_bin[i].entry_type == "Initiative":
-            print(char1.logs_bin[i].actor, "threw a", char1.logs_bin[i].roll_bin[0].dx_result)
-    print(char1.logs_count)
+   # for i in range (0, char1.logs_count):
+       # if char2.logs_bin[i].entry_type == "Initiative":
+            #print(char2.logs_bin[i].actor, "threw a", char2.logs_bin[i].roll_bin[0].dx_result)
+    print(char1.name, "threw", char1.nat_one_count, "natural 1s and", char1.nat_twenty_count, "natural 20s and", char1.nat_hundred_count, "natural hundreds")
+    print(char2.name, "threw", char2.nat_one_count, "natural 1s and", char2.nat_twenty_count, "natural 20s and", char2.nat_hundred_count, "natural hundreds")
 
 main()
