@@ -1,0 +1,70 @@
+#! python3
+
+from dataclasses import dataclass
+@dataclass
+class campaign():
+    def __init__(self, name, player_names):
+        print("something to make the error go away")
+
+class player():
+    def add_actor(self, actor_name):
+        actor_exists = isinstance(actor_name, actor)
+        # if the actor already exists, then we can just add it
+        # if it doesn't then we need to make a new object
+        # and let's just make sure that we're not assigning the actor to the wrong player, hey?  
+        if actor_exists and actor_name.player == self.name:
+            if actor_name not in self.actors_list:
+                self.actors_list.append(actor_name)
+        elif actor_exists and actor_name.player != self.name:
+            # assign to gamemaster player's actor_list... maybe need to make this a separate function 
+            # if we add more functionality like statistics calc at this function level 
+            # okay, this isn't fully appropriate, because what if this character is assigned to a player and not the gm 
+            # if there's an existing player that it belongs to, then we should go to that player and add the character there
+            # if not, THEN we give it to the gm 
+            if actor_name not in gm.actors_list:
+                gm.actors_list.append(actor_name)
+        return self.actors_list
+    
+        
+    def __init__(self, name, campaigns_list, actors_list=[]):
+        self.actors_list = []
+        self.name = name
+        self.campaigns_list = campaigns_list
+        for actor_name in range(0, len(actors_list)):
+            self.add_actor(actors_list[actor_name])
+
+class actor():
+    def add_log(self, log_entry):
+        if self.logs_bin:
+            self.logs_bin.append(log_entry)
+        else:
+            self.logs_bin = [log_entry]
+        self.logs_count = len(self.logs_bin)
+        self.roll_count = self.roll_count + log_entry.roll_count
+
+    def __init__(self, name, player, logs_bin=[]):
+        self.name = name
+        self.player = player 
+        self.logs_bin = logs_bin
+        logs_count = len(logs_bin)
+
+def main():
+    # create actors before creating players
+    global gm
+
+
+    char1 = actor("Namielle", "Z1")
+    char2 = actor("Ercia Kash", "Z1")
+    gm = player("Gamemaster", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"])
+    
+    player1 = player("Z1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char1, char2])
+
+    # let's add a new character 
+    
+    char3 = actor("Gage", "D1")
+    player1.add_actor(char3)
+
+    print(player1.actors_list)
+    print(player1.campaigns_list)
+    print(gm.actors_list)
+main()  
