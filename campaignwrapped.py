@@ -4,6 +4,7 @@
 
 from dataclasses import dataclass
 import datetime
+import os
 #import pandas as pd
 
 global src_file
@@ -25,7 +26,7 @@ class player():
         self.campaigns_list = campaigns_list
         for actor_name in range(0, len(actors_list)):
             self.add_actor(actors_list[actor_name])
-            
+
 class actor():
     def add_log(self, log_entry):
         if self.logs_bin:
@@ -132,6 +133,7 @@ class die_roll():
             nat_hundred_flag = True
 
         return nat_one_flag, nat_twenty_flag, nat_hundred_flag
+            
 
 def find_actor(log_lines):
     txt = log_lines[1]
@@ -311,8 +313,8 @@ def pull_log_lines(src_file):
     default_datetime = (1900, 1, 1)
     default_actor = "Actor Unknown"
 
-    with open(src_file) as f:
-        for line in f: 
+    with open(os.path.join(os.path.dirname(__file__), src_file), 'r') as input_file:
+        for line in input_file: 
             txt = line.strip()
 
             # if it's our first roll there won't be -- before it
@@ -327,10 +329,13 @@ def pull_log_lines(src_file):
                 log_lines = [txt]                     
             else:
                 log_lines.append(txt)       
+
+    input_file.close()
     return log_bin
 
 def main():
-    #src_file = 'Data\TestSlice.txt'
+    src_file = "data/FirstWorld_Mod.txt"
+
     log_bin = []
 
     log_bin = pull_log_lines(src_file)
@@ -350,11 +355,13 @@ def main():
             char2.add_log(log_bin[i])
             
   
+  
    # for i in range (0, char1.logs_count):
        # if char2.logs_bin[i].entry_type == "Initiative":
             #print(char2.logs_bin[i].actor, "threw a", char2.logs_bin[i].roll_bin[0].dx_result)
-        print(char1.name, "threw", char1.nat_one_count, "natural 1s and", char1.nat_twenty_count, "natural 20s and", 
+    print(char1.name, "threw", char1.nat_one_count, "natural 1s and", char1.nat_twenty_count, "natural 20s and", 
           char1.nat_hundred_count, "natural hundreds, out of", char1.roll_count, "total rolls")
     print(char2.name, "threw", char2.nat_one_count, "natural 1s and", char2.nat_twenty_count, "natural 20s and", 
           char2.nat_hundred_count, "natural hundreds out of", char2.roll_count, "total rolls")
 main()
+
