@@ -3,8 +3,23 @@
 from dataclasses import dataclass
 @dataclass
 class campaign():
+    def add_player(self, player_obj):
+        if player_obj.name in self.player_list:
+            pass
+        else:
+            self.player_list.append(player_obj)
+
     def __init__(self, name, player_names):
-        print("something to make the error go away")
+        self.name = name
+        self.player_list = []
+        
+        for player_name in player_names:
+            player_exists = isinstance(player_name, player)
+            if player_exists:
+                print(player_name.name)
+            else:
+                new_player = player(player_name, )
+
 
 class player():
     def add_actor(self, actor_name):
@@ -25,6 +40,10 @@ class player():
                 gm.actors_list.append(actor_name)
         return self.actors_list
     
+    def add_campaign(self, new_campaign):
+        if new_campaign not in self.campaigns_list:
+            self.campaigns_list.append(new_campaign)
+        return self.campaigns_list
         
     def __init__(self, name, campaigns_list, actors_list=[]):
         self.actors_list = []
@@ -52,17 +71,28 @@ def main():
     # create actors before creating players
     global gm
 
-
-    char1 = actor("Namielle", "Z1")
-    char2 = actor("Ercia Kash", "Z1")
+    char1 = actor("Name", "Z1")
+    char2 = actor("Second Character", "Z1")
+    char3 = actor("Another Name", "D1")
+    char4 = actor("Look! More Character", "M1")
+    char5 = actor("Grace", "H1")
     gm = player("Gamemaster", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"])
-    
     player1 = player("Z1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char1, char2])
+    player2 = player("D1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char3])
+    player3 = player("M1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char4])
+    player4 = player("H1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char5])
 
-    # let's add a new character 
-    
-    char3 = actor("Gage", "D1")
+    #this will probably error out but I'm holding onto this line to remember what I'm doing
     player1.add_actor(char3)
+
+# this sucks and I don't want to do it this way ugh 
+# how do I make these interlocking classes work 
+# I think I want to create a campaign, then add players and their characters to it, 
+# then add whatever actors we find that aren't PCs to the GM while we go through the log 
+# so that means we don't know the players that will be added to a campaign at init, or their characters
+
+
+    one_campaign = campaign("Hell's Rebels", ["Z1", "M1", "D1", "H1"])
 
     print(player1.actors_list)
     print(player1.campaigns_list)
