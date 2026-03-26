@@ -353,7 +353,8 @@ def main():
    # for i in range (0, char1.logs_count):
        # if char2.logs_bin[i].entry_type == "Initiative":
             #print(char2.logs_bin[i].actor, "threw a", char2.logs_bin[i].roll_bin[0].dx_result)
-    print(char1.name, "threw", char1.nat_one_count, "natural 1s and", char1.nat_twenty_count, "natural 20s and", char1.nat_hundred_count, "natural hundreds")
-    print(char2.name, "threw", char2.nat_one_count, "natural 1s and", char2.nat_twenty_count, "natural 20s and", char2.nat_hundred_count, "natural hundreds")
-
+        print(char1.name, "threw", char1.nat_one_count, "natural 1s and", char1.nat_twenty_count, "natural 20s and", 
+          char1.nat_hundred_count, "natural hundreds, out of", char1.roll_count, "total rolls")
+    print(char2.name, "threw", char2.nat_one_count, "natural 1s and", char2.nat_twenty_count, "natural 20s and", 
+          char2.nat_hundred_count, "natural hundreds out of", char2.roll_count, "total rolls")
 main()
