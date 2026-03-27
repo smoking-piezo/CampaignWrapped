@@ -12,7 +12,28 @@ class campaign():
             # create player object
             # append player object to list of players in the campaign 
             # oh, gotta make sure we make a gamemaster player too 
-            print("placeholder code, delete me you fool")
+            new_player = player(player_name, self.name)
+            self.players_list.append(new_player)
+        # create that gm 
+        gamemaster = player("Gamemaster", self.name)
+        self.players_list.append(gamemaster)
+    
+    def update_player_actor(self, player_name, actors_list):
+        # ok, so.. find the player object first 
+        for player_obj in self.players_list: 
+            if player_obj.name == player_name:
+                player_to_update = player_obj
+        
+        for actor_name in actors_list:
+            player_to_update.add_actor(actor_name)
+        
+
+
+    def show_player_stats(self):
+        for player in self.players_list:
+            print(player.name)
+            for actor in player.actors_list:
+                print(actor.name)
 
 class player():
     def __init__(self, name, campaign):
@@ -27,8 +48,14 @@ class player():
         self.actors_list = []
 
     def add_actor(self, actor_name):
-        # okay, let's definitely include that bit we wrote about creating an actor if it doesn't exist, and grabbing one that does 
         actor_exists = isinstance(actor_name, actor)
+        if actor_exists:
+            if actor_name not in self.actors_list:
+                self.actors_list.append(actor_name)
+        else: 
+            new_actor = actor(actor_name, self.name)
+            self.actors_list.append(new_actor)
+        return self.actors_list    
 
 class actor(): 
     def __init__(self, name, player, logs_bin=[]):
@@ -106,8 +133,8 @@ class actor():
         
 def main():
     one_campaign = campaign("Pathfinder Adventure Path", ["Player1Name", "Player2Name", "Player3Name", "Player4Name"])
-
-
+    one_campaign.update_player_actor("Player1Name", ["Character1", "Character2"])
+    one_campaign.show_player_stats()
 
     '''
     char1 = actor("Name", "Z1")
