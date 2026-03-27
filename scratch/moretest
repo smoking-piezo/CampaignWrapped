@@ -51,8 +51,6 @@ class player():
             new_actor = actor(actor_name, self.name)
             self.actors_list.append(new_actor)
         return self.actors_list    
-
-    # need to add in a function for adding an actor to the gamemaster player later since we'll be doin that 
     
 class actor(): 
     def __init__(self, name, player, logs_bin=[]):
@@ -60,13 +58,29 @@ class actor():
         self.player = player 
         self.logs_bin = logs_bin
         logs_count = len(logs_bin)
-      
+
+class log_entry():
+    def __init__(self, date_time, actor, log_lines, entry_type, roll_bin=[]):
+        self.date_time = date_time
+        self.actor = actor
+        self.log_lines = log_lines 
+        self.roll_bin = roll_bin
+        self.entry_type = entry_type
+
 def main():
     one_campaign = campaign("Pathfinder Adventure Path", ["Player1Name", "Player2Name", "Player3Name", "Player4Name"])
     one_campaign.update_player_actor("Player1Name", ["Character1", "Character2"])
     one_campaign.update_player_actor("Player2Name",["Character3"])
     one_campaign.update_player_actor("Player3Name", ["Character4"])
     one_campaign.update_player_actor("Gamemaster",["Goblin", "Orc", "Dragon"])
+    one_campaign.show_player_stats()
+
+    a_roll = ['----', '(2020, 12, 10)', 'NPCRoller', 'attack', 'attack 20 damage 15', 'pew pew']
+    captains_log = log_entry(a_roll[1], a_roll[2],a_roll,"Attack")
+    captain = actor(captains_log.actor, "Gamemaster", [captains_log])
+    one_campaign.update_player_actor("Gamemaster",[captain])
+    # this works! except it also means that we have to have the campaign object in our log handler. I guess that's fine? 
+
     one_campaign.show_player_stats()
 
 main()  
