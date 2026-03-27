@@ -9,9 +9,7 @@ class campaign():
 
         # we're assuming that the campaign gets made first, before any players, so we'll make players as part of this
         for player_name in player_names:
-            # create player object
-            # append player object to list of players in the campaign 
-            # oh, gotta make sure we make a gamemaster player too 
+            # create player object, add to player list
             new_player = player(player_name, self.name)
             self.players_list.append(new_player)
         # create that gm 
@@ -19,15 +17,12 @@ class campaign():
         self.players_list.append(gamemaster)
     
     def update_player_actor(self, player_name, actors_list):
-        # ok, so.. find the player object first 
         for player_obj in self.players_list: 
             if player_obj.name == player_name:
                 player_to_update = player_obj
         
         for actor_name in actors_list:
-            player_to_update.add_actor(actor_name)
-        
-
+            player_to_update.add_actor_from_campaign(actor_name)
 
     def show_player_stats(self):
         for player in self.players_list:
@@ -47,7 +42,7 @@ class player():
         # we'll add actors later as a function 
         self.actors_list = []
 
-    def add_actor(self, actor_name):
+    def add_actor_from_campaign(self, actor_name):
         actor_exists = isinstance(actor_name, actor)
         if actor_exists:
             if actor_name not in self.actors_list:
@@ -57,104 +52,21 @@ class player():
             self.actors_list.append(new_actor)
         return self.actors_list    
 
+    # need to add in a function for adding an actor to the gamemaster player later since we'll be doin that 
+    
 class actor(): 
     def __init__(self, name, player, logs_bin=[]):
         self.name = name
         self.player = player 
         self.logs_bin = logs_bin
         logs_count = len(logs_bin)
-
-'''
-class campaign():
-    def add_player(self, player_obj):
-        if player_obj.name in self.player_list:
-            pass
-        else:
-            self.player_list.append(player_obj)
-
-    def __init__(self, name, player_names):
-        self.name = name
-        self.player_list = []
-        
-        for player_name in player_names:
-            player_exists = isinstance(player_name, player)
-            if player_exists:
-                print(player_name.name)
-            else:
-                new_player = player(player_name, )
-
-
-class player():
-    def add_actor(self, actor_name):
-        actor_exists = isinstance(actor_name, actor)
-        # if the actor already exists, then we can just add it
-        # if it doesn't then we need to make a new object
-        # and let's just make sure that we're not assigning the actor to the wrong player, hey?  
-        if actor_exists and actor_name.player == self.name:
-            if actor_name not in self.actors_list:
-                self.actors_list.append(actor_name)
-        elif actor_exists and actor_name.player != self.name:
-            # assign to gamemaster player's actor_list... maybe need to make this a separate function 
-            # if we add more functionality like statistics calc at this function level 
-            # okay, this isn't fully appropriate, because what if this character is assigned to a player and not the gm 
-            # if there's an existing player that it belongs to, then we should go to that player and add the character there
-            # if not, THEN we give it to the gm 
-            if actor_name not in gm.actors_list:
-                gm.actors_list.append(actor_name)
-        return self.actors_list
-    
-    def add_campaign(self, new_campaign):
-        if new_campaign not in self.campaigns_list:
-            self.campaigns_list.append(new_campaign)
-        return self.campaigns_list
-        
-    def __init__(self, name, campaigns_list, actors_list=[]):
-        self.actors_list = []
-        self.name = name
-        self.campaigns_list = campaigns_list
-        for actor_name in range(0, len(actors_list)):
-            self.add_actor(actors_list[actor_name])
-
-class actor():
-    def add_log(self, log_entry):
-        if self.logs_bin:
-            self.logs_bin.append(log_entry)
-        else:
-            self.logs_bin = [log_entry]
-        self.logs_count = len(self.logs_bin)
-        self.roll_count = self.roll_count + log_entry.roll_count
-
-    def __init__(self, name, player, logs_bin=[]):
-        self.name = name
-        self.player = player 
-        self.logs_bin = logs_bin
-        logs_count = len(logs_bin)
-'''
-        
+      
 def main():
     one_campaign = campaign("Pathfinder Adventure Path", ["Player1Name", "Player2Name", "Player3Name", "Player4Name"])
     one_campaign.update_player_actor("Player1Name", ["Character1", "Character2"])
+    one_campaign.update_player_actor("Player2Name",["Character3"])
+    one_campaign.update_player_actor("Player3Name", ["Character4"])
+    one_campaign.update_player_actor("Gamemaster",["Goblin", "Orc", "Dragon"])
     one_campaign.show_player_stats()
 
-    '''
-    char1 = actor("Name", "Z1")
-    char2 = actor("Second Character", "Z1")
-    char3 = actor("Another Name", "D1")
-    char4 = actor("Look! More Character", "M1")
-    char5 = actor("Grace", "H1")
-    gm = player("Gamemaster", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"])
-    player1 = player("Z1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char1, char2])
-    player2 = player("D1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char3])
-    player3 = player("M1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char4])
-    player4 = player("H1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], [char5])
-
-    #this will probably error out but I'm holding onto this line to remember what I'm doing
-    player1.add_actor(char3)
-    '''
-
-    '''
-    print(player1.actors_list)
-    print(player1.campaigns_list)
-    print(gm.actors_list)
-    '''
 main()  
