@@ -42,6 +42,22 @@ class campaign():
             for actor in player.actors_list:
                 print(actor.name)
 
+    def list_player_actors(self):
+        campaign_actors = []
+        # we care only about the actors that aren't the gamemaster 
+        for player in self.players_list:
+            if player.name == "Gamemaster":
+                break
+            for actor in player.actors_list:
+                campaign_actors.append(actor.name)
+        return campaign_actors 
+    
+    def fetch_actor(self, actor_name):
+        for player in self.players_list:
+            for actor in player.actors_list:
+                if actor.name == actor_name:
+                    return actor 
+
 class player():
     def __init__(self, name, campaign):
         # start the player object with the name of the player and name of its campaign
@@ -335,13 +351,17 @@ def init_init_roll(log):
     
     return
 
-def log_handler(log_bin): 
+def log_handler(log_bin, campaign): 
     for log in log_bin:
         log.date_time = find_roll_date(log.log_lines)
         log.actor = find_actor(log.log_lines)
-        # return something here? 
         initialize_roll(log)
-
+        if log.actor in campaign.list_player_actors():
+            actor_obj = campaign.fetch_actor(log.actor)
+            actor_obj.add_log(log)
+        else:
+            print("Could not add log for", log.actor)
+            # this is where we figure out if this log belongs to a different campaign or the gm 
     return log_bin
 
 def pull_log_lines(src_file):
@@ -385,7 +405,7 @@ def main():
     one_campaign.show_player_stats()
 
     log_bin = pull_log_lines(src_file)
-    log_bin = log_handler(log_bin)
+    log_bin = log_handler(log_bin, one_campaign)
 
     '''
     for i in range(0, len(log_bin)):
