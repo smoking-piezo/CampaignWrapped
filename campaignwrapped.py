@@ -2,31 +2,69 @@
 # pathfinder1e_campaignwrapped.py - Pathfinder 1e Campaign Wrapped 
 # A silly program meant to pull combat stats from a Pathfinder 1e chat log so players can reminisce over their good and bad rolls.  
 
+# TODO 
+# Finish class refactor 
+# Separate this file out into a couple different files cos this is getting long and annoying. one file for classes, one for roll identification? 
+# how to differentiate different campaigns so we don't end up putting multiple campaigns in the gamemaster bucket? 
+
 from dataclasses import dataclass
 import datetime
 import os
-#import pandas as pd
 
 global src_file
 
 @dataclass
+class campaign():
+    def __init__(self, name, player_names):
+        self.name = name
+        self.players_list = []
+
+        # we're assuming that the campaign gets made first, before any players, so we'll make players as part of this
+        for player_name in player_names:
+            # create player object, add to player list
+            new_player = player(player_name, self.name)
+            self.players_list.append(new_player)
+        # create that gm 
+        gamemaster = player("Gamemaster", self.name)
+        self.players_list.append(gamemaster)
+    
+    def update_player_actor(self, player_name, actors_list):
+        for player_obj in self.players_list: 
+            if player_obj.name == player_name:
+                player_to_update = player_obj
+        
+        for actor_name in actors_list:
+            player_to_update.add_actor_from_campaign(actor_name)
+
+    def show_player_stats(self):
+        for player in self.players_list:
+            print(player.name)
+            for actor in player.actors_list:
+                print(actor.name)
+
 class player():
-    def add_actor(self, actor_name):
+    def __init__(self, name, campaign):
+        # start the player object with the name of the player and name of its campaign
+        self.name = name
+        
+        # how do we manage making sure a player is added to multiple campaigns? what if the desired campaign object hasn't been made yet? 
+        # just say NO to multiple campaigns and make a new player object for each campaign 
+        self.campaign = campaign
+        
+        # we'll add actors later as a function 
+        self.actors_list = []
+        
+    def add_actor_from_campaign(self, actor_name):
         actor_exists = isinstance(actor_name, actor)
         if actor_exists:
             if actor_name not in self.actors_list:
                 self.actors_list.append(actor_name)
-        else:
-            pass
-        return self.actors_list
-        
-    def __init__(self, name, campaigns_list, actors_list):
-        self.actors_list = []
-        self.name = name
-        self.campaigns_list = campaigns_list
-        for actor_name in range(0, len(actors_list)):
-            self.add_actor(actors_list[actor_name])
+        else: 
+            new_actor = actor(actor_name, self.name)
+            self.actors_list.append(new_actor)
+        return self.actors_list  
 
+            
 class actor():
     def add_log(self, log_entry):
         if self.logs_bin:
@@ -338,13 +376,18 @@ def main():
 
     log_bin = []
 
+    one_campaign = campaign("Hell's Rebels", ["H1", "Z1", "D1", "M1"])
+    one_campaign.update_player_actor("Z1", ["Namielle", "Ercia Kash"])
+    one_campaign.update_player_actor("H1",["Valeric"])
+    one_campaign.update_player_actor("D1", ["Gage"])
+    one_campaign.update_player_actor("M1", ["Tihana"])
+    one_campaign.update_player_actor("Gamemaster",["Goblin", "Orc", "Dragon"])
+    one_campaign.show_player_stats()
+
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin)
 
-    player1 = player("Z1", ["Hell's Rebels", "Iron Gods", "Ruins of Azlant"], ["Namielle", "Ercia Kash"])
-    char1 = actor("Namielle", "Z1")
-    char2 = actor("Gage", "D1")
-
+    '''
     for i in range(0, len(log_bin)):
         if log_bin[i].roll_count > 1:
             print(log_bin[i].entry_type)
@@ -353,15 +396,15 @@ def main():
             char1.add_log(log_bin[i])
         if log_bin[i].actor == "Gage":
             char2.add_log(log_bin[i])
-            
   
-  
-   # for i in range (0, char1.logs_count):
-       # if char2.logs_bin[i].entry_type == "Initiative":
-            #print(char2.logs_bin[i].actor, "threw a", char2.logs_bin[i].roll_bin[0].dx_result)
+   for i in range (0, char1.logs_count):
+       if char2.logs_bin[i].entry_type == "Initiative":
+            print(char2.logs_bin[i].actor, "threw a", char2.logs_bin[i].roll_bin[0].dx_result)
     print(char1.name, "threw", char1.nat_one_count, "natural 1s and", char1.nat_twenty_count, "natural 20s and", 
           char1.nat_hundred_count, "natural hundreds, out of", char1.roll_count, "total rolls")
     print(char2.name, "threw", char2.nat_one_count, "natural 1s and", char2.nat_twenty_count, "natural 20s and", 
           char2.nat_hundred_count, "natural hundreds out of", char2.roll_count, "total rolls")
+
+    '''
 main()
 
