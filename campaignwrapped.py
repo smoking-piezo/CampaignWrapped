@@ -9,8 +9,8 @@
 
 import datetime
 import os
-import roll_identification
-import classes
+import roll_identification 
+import classes 
 
 global src_file
 
@@ -72,24 +72,6 @@ def main():
     log_bin = log_handler(log_bin, one_campaign)
 
     one_campaign.show_player_stats()
-    '''
-    for i in range(0, len(log_bin)):
-        if log_bin[i].roll_count > 1:
-            print(log_bin[i].entry_type)
-        if log_bin[i].actor == "Namielle":
-            #print(log_bin[i].entry_type, log_bin[i].actor, "threw a", log_bin[i].roll_bin[0].dx_result)
-            char1.add_log(log_bin[i])
-        if log_bin[i].actor == "Gage":
-            char2.add_log(log_bin[i])
-  
-   for i in range (0, char1.logs_count):
-       if char2.logs_bin[i].entry_type == "Initiative":
-            print(char2.logs_bin[i].actor, "threw a", char2.logs_bin[i].roll_bin[0].dx_result)
-    print(char1.name, "threw", char1.nat_one_count, "natural 1s and", char1.nat_twenty_count, "natural 20s and", 
-          char1.nat_hundred_count, "natural hundreds, out of", char1.roll_count, "total rolls")
-    print(char2.name, "threw", char2.nat_one_count, "natural 1s and", char2.nat_twenty_count, "natural 20s and", 
-          char2.nat_hundred_count, "natural hundreds out of", char2.roll_count, "total rolls")
 
-    '''
 main()
 
