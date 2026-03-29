@@ -3,8 +3,6 @@
 # A silly program meant to pull combat stats from a Pathfinder 1e chat log so players can reminisce over their good and bad rolls.  
 
 # TODO 
-# Finish class refactor 
-# Separate this file out into a couple different files cos this is getting long and annoying. one file for classes, one for roll identification? 
 # how to differentiate different campaigns so we don't end up putting multiple campaigns in the gamemaster bucket? 
 
 import datetime
@@ -74,4 +72,3 @@ def main():
     one_campaign.show_player_stats()
 
 main()
-

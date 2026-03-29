@@ -31,7 +31,13 @@ class campaign():
         for player in self.players_list:
             print(player.name)
             for actor in player.actors_list:
+                if(actor.roll_count == 0):
+                    break
                 print(actor.name)
+                print("Total rolls:", actor.roll_count)
+                print("Natural 1s rolled:", actor.nat_one_count)
+                print("Natural 20s rolled:", actor.nat_twenty_count)
+                print("Natural 100s rolled:", actor.nat_hundred_count)
 
     def list_player_actors(self):
         campaign_actors = []
@@ -69,7 +75,7 @@ class player():
         else: 
             new_actor = actor(actor_name, self.name)
             self.actors_list.append(new_actor)
-        return self.actors_list  
+        return  
             
 class actor():
     def add_log(self, log_entry):
@@ -86,7 +92,7 @@ class actor():
             self.nat_twenty_count += log_entry.nat_twenty_count
         if log_entry.nat_hundred_count:
             self.nat_hundred_count += log_entry.nat_hundred_count
-        return self.logs_bin, self.logs_count, self.roll_count, self.nat_one_count, self.nat_twenty_count, self.nat_hundred_count
+        return 
 
     def __init__(self, name, player, logs_bin=[]):
         self.name = name
@@ -107,14 +113,13 @@ class log_entry():
     acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
                         "Fortitude Saving Throw", 'Unknown Saving Throw', "Skill Check", "Attack",
                         "Spell Cast", "Item / Potion Used", "Raw Roll", "Chat Message", "Ability Test",
-                        "Combat Maneuver", "Caster Level Check", "Defenses", "Error"]
+                        "Combat Maneuver", "Caster Level Check", "Defenses", "Concentration Check", "Error"]
     
     def add_roll(self, roll_object):
-        if self.roll_bin:
-            self.roll_bin = self.roll_bin.append(roll_object)
+        if len(self.roll_bin) >= 0:
+            self.roll_bin.append(roll_object)
         else:
             self.roll_bin = [roll_object]
-        self.roll_bin = self.roll_bin
         self.roll_count = len(self.roll_bin)
 
         if roll_object.nat_one_flag:
@@ -123,8 +128,7 @@ class log_entry():
             self.nat_twenty_count += 1
         if roll_object.nat_hundred_flag:
             self.nat_hundred_count += 1
-
-        return self.roll_bin, self.roll_count, self.nat_one_count, self.nat_twenty_count, self.nat_hundred_count
+        return 
     
     def update_type(self, roll_type):
         if roll_type in self.acceptable_types:
@@ -159,6 +163,9 @@ class die_roll():
             self.result_w_mods = result_w_mods
         else: 
             self.result_w_mods = dx_result
+        self.nat_one_flag = False
+        self.nat_twenty_flag = False
+        self.nat_hundred_flag = False
 
         self.nat_one_flag, self.nat_twenty_flag, self.nat_hundred_flag = self.notable_rolls(dx_type, dx_result)
     
