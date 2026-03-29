@@ -57,10 +57,27 @@ def initialize_roll(log):
         init_generic_roll(log, "Initiative")
         return 
     
+    # if an actor "Took 10" or "Took 20" on a skill or other check then it'll show up in the roll_id line
+    # that'll cause an error, so let's trim that out 
+    keywords_to_remove = ["(Take", "10)", "20)"]
+    present_removable_keywords = []
+
+    for index in range(0, len(roll_id_split)):
+        for removable_keyword in keywords_to_remove:
+            if roll_id_split[index] == removable_keyword:
+                # we can't just straight up remove the keywords from the list WHILE we're iterating through it or we get an index error
+                # so we make a list of the words that are in the roll_id and remove them later
+                # there's gotta be a better way to do this than ANOTHER for loop? oh well
+                present_removable_keywords.append(removable_keyword)
+
+    for each in present_removable_keywords:
+        roll_id_split.remove(each)  
+    # ok, now that we've done this, we have to pass it to whatever init function the roll goes to so we don't get this same error 
+    
     for keyword in roll_id_split:
         match keyword:
             case "Saving" | "Throw":
-                init_save_roll(log)
+                init_save_roll(log, roll_id_split)
                 break
             case "Concentration":
                 init_generic_roll(log, "Concentration Check")
@@ -74,8 +91,12 @@ def initialize_roll(log):
             case "Combat" | "Maneuver" | "Bonus": 
                 init_generic_roll(log, "Combat Maneuver Bonus")
                 break
+            case "Skill":
+                init_generic_roll(log, "Skill Check")
+                break
             case _:
-                return
+                continue
+        #print(keyword)
     return
     '''
             case "Skill":
@@ -135,15 +156,15 @@ def init_generic_roll(log, roll_type):
     
 
     roll_obj = classes.die_roll(dx_type, dx_result, result_w_mods)
-
+    
     log.update_type(roll_type)
     log.add_roll(roll_obj)
 
     return 
 
-def init_save_roll(log):
+def init_save_roll(log, roll_id_split):
     roll_lines = log.log_lines
-    roll_id = roll_lines[2]
+    roll_id = ' '.join(roll_id_split)
     roll_len = len(roll_lines)
     save_keywords = ["Constitution", "Dexterity", "Wisdom"]
     saving_throw_type = ""

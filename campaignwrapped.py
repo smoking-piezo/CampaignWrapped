@@ -3,7 +3,8 @@
 # A silly program meant to pull combat stats from a Pathfinder 1e chat log so players can reminisce over their good and bad rolls.  
 
 # TODO 
-# Finish class refactor 
+# how are we gonna handle tallying up the types of skill checks by skill types? 
+# differentiate campaigns by date/character?
 
 import datetime
 import os
@@ -20,10 +21,10 @@ def log_handler(log_bin, this_campaign):
         if log.actor in this_campaign.list_player_actors():
             actor_obj = this_campaign.fetch_actor(log.actor)
             actor_obj.add_log(log)
-        else:
+        #else:
             # this is where we figure out if this log belongs to a different campaign or the gm 
             # first let's just assign it to the gm 
-            print(log.actor)
+            #print(log.actor)
     return log_bin
 
 def pull_log_lines(src_file):
@@ -69,5 +70,4 @@ def main():
     log_bin = log_handler(log_bin, one_campaign)
 
     one_campaign.show_player_stats()
-
 main()

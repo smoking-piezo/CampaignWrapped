@@ -2,6 +2,9 @@
 # classes.py
 # Class definitions for Campaign Wrapped
 
+# TODO
+# add a function to player class to tally up the stats from each actor and make player stats 
+
 from dataclasses import dataclass
 
 @dataclass
@@ -148,11 +151,14 @@ class log_entry():
             self.error_count = self.error_count - 1
         if self.entry_type == "Unknown":
             self.unknown_count = self.unknown_count - 1
+
         if roll_type in self.acceptable_types:
             self.entry_type = roll_type
+            
         elif roll_type:
             self.entry_type = "Error"
             self.error_count += 1
+            print(self.date_time)
         else: 
             self.entry_type = "Unknown"
             self.unknown_count += 1
