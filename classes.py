@@ -40,6 +40,8 @@ class campaign():
                 print("Natural 1s rolled:", actor.nat_one_count)
                 print("Natural 20s rolled:", actor.nat_twenty_count)
                 print("Natural 100s rolled:", actor.nat_hundred_count)
+                print("Error rolls:", actor.error_count)
+                print("Unknown rolls:", actor.unknown_count)
         return
 
     def list_player_actors(self):
@@ -96,6 +98,10 @@ class actor():
             self.nat_twenty_count += log_entry.nat_twenty_count
         if log_entry.nat_hundred_count:
             self.nat_hundred_count += log_entry.nat_hundred_count
+        if log_entry.error_count:
+            self.error_count += 1
+        if log_entry.unknown_count: 
+            self.unknown_count += 1
         return 
 
     def __init__(self, name, player, logs_bin=[]):
@@ -112,6 +118,8 @@ class actor():
         self.nat_one_count = 0
         self.nat_twenty_count = 0
         self.nat_hundred_count = 0
+        self.error_count = 0
+        self.unknown_count = 0
         return
 
 class log_entry():
@@ -136,12 +144,18 @@ class log_entry():
         return 
     
     def update_type(self, roll_type):
+        if self.entry_type == "Error":
+            self.error_count = self.error_count - 1
+        if self.entry_type == "Unknown":
+            self.unknown_count = self.unknown_count - 1
         if roll_type in self.acceptable_types:
             self.entry_type = roll_type
         elif roll_type:
             self.entry_type = "Error"
+            self.error_count += 1
         else: 
             self.entry_type = "Unknown"
+            self.unknown_count += 1
         return self.entry_type
 
     def __init__(self, date_time, actor, log_lines, entry_type):
@@ -153,12 +167,16 @@ class log_entry():
         self.nat_one_count = 0
         self.nat_twenty_count = 0
         self.nat_hundred_count = 0
+        self.error_count = 0
+        self.unknown_count = 0
         if entry_type in self.acceptable_types:
             self.entry_type = entry_type
         elif entry_type:
             self.entry_type = "Error"
+            self.error_count += 1
         else: 
             self.entry_type = "Unknown"
+            self.unknown_count += 1
         return
 
 class die_roll():
