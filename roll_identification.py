@@ -54,31 +54,34 @@ def initialize_roll(log):
 
     init_check = [line for line in log.log_lines if line.startswith('Initiative')]
     if init_check: 
-        init_init_roll(log)
+        init_generic_roll(log, "Initiative")
         return 
     
     for keyword in roll_id_split:
         match keyword:
             case "Saving" | "Throw":
                 init_save_roll(log)
-                return
-            case _:
-                return
-        '''
             case "Concentration":
                 init_generic_roll(log, "Concentration Check")
+            case "Ability" | "Test": 
+                init_generic_roll(log, "Ability Test")
+            case "Caster":
+                init_generic_roll(log, "Caster Level Check")
+            case "Combat" | "Maneuver" | "Bonus": 
+                init_generic_roll(log, "Combat Maneuver Bonus")
+            case _:
+                return
+    return
+    '''
             case "Skill":
                 init_skill_check(log)
             case "(Use)" | "(Drink)":
                 init_use_save_roll(log)
             case "Up" | "Report"
                 init_level_up(log)
-            case "Ability" | "Test": 
-                init_generic_roll(log, "Ability Test")
             case "Melee" | "Ranged":
                 init_attack(log)
-            case "Caster":
-                init_generic_roll(log, "Caster Level Check")
+
             case "Defenses":
                 init_message(log)
 
@@ -93,6 +96,45 @@ def initialize_roll(log):
         if show_check:
             init_message(log)
     '''
+
+def init_generic_roll(log, roll_type):
+    # a generic roll is a type of roll that has a type attached to it, a single d20 roll, and not much else
+    # the following types of rolls will be handled: Concentration Checks, Ability Test, Caster Level Check, CMB/CMD
+
+    # to initialize a roll, we need to get the associated dice roll. this will probably be in the last line which starts with "1d20"
+    # we want to add the d20 roll and the result roll with modifiers 
+    # however, some of the older logs have an issue where the final line is missing information, so it'll be " =  = resultwmods"
+    # so we'll have to look for the OTHER line in the roll that starts with "1d20" and pick out the second string in the split 
+
+    dx_type = "d20"
+    result_line = [line for line in log.log_lines if line.startswith('1d20') and "=" in line]
+
+    try: 
+        result_line = result_line[0].split("=")
+
+    except IndexError:
+        # OK so if we're here, then we're at an old log. now we need to look at the log_lines:
+        # log_lines[3] will have the full roll, and the line after will start with 1d20 and give the roll
+        result_w_mods = int(log.log_lines[3])
+        result_line = [line for line in log.log_lines if line.startswith('1d20') and "=" not in line]
+        split_result_line = result_line[0].split(" ")
+        dx_result = split_result_line[1]
+
+    else: 
+        split_result_line = result_line[1].split("+")
+        dx_result = int(split_result_line[0].strip())
+        if roll_type == "Initiative":
+            result_w_mods = float(result_line[2])
+        else:
+            result_w_mods = int(result_line[2])
+    
+
+    roll_obj = classes.die_roll(dx_type, dx_result, result_w_mods)
+
+    log.update_type(roll_type)
+    log.add_roll(roll_obj)
+
+    return 
 
 def init_save_roll(log):
     roll_lines = log.log_lines
@@ -142,27 +184,5 @@ def init_save_roll(log):
 
     log.update_type(saving_throw_type)
     log.add_roll(save_roll)
-    
-    return
-
-
-def init_init_roll(log):
-    # to initialize an initiative roll, we need to get the associated dice roll 
-    # this will probably be in the last line which starts with 1d20
-    # we want to add the d20 roll and the result roll with modifiers 
-
-    result_line = [line for line in log.log_lines if line.startswith('1d20') and "=" in line]
-
-    result_line = result_line[0].split("=")
-
-    dx_type = "d20"
-    split_result_line = result_line[1].split("+")
-    dx_result = int(split_result_line[0].strip())
-    result_w_mods = float(result_line[2])
-
-    init_roll = classes.die_roll(dx_type, dx_result, result_w_mods)
-
-    log.update_type("Initiative")
-    log.add_roll(init_roll)
     
     return
