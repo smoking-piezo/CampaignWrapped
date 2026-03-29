@@ -3,12 +3,12 @@
 # A silly program meant to pull combat stats from a Pathfinder 1e chat log so players can reminisce over their good and bad rolls.  
 
 # TODO 
-# how to differentiate different campaigns so we don't end up putting multiple campaigns in the gamemaster bucket? 
+# Finish class refactor 
 
 import datetime
 import os
-import roll_identification 
-import classes 
+import roll_identification
+import classes
 
 global src_file
 
@@ -64,7 +64,6 @@ def main():
     one_campaign.update_player_actor("D1", ["Gage"])
     one_campaign.update_player_actor("M1", ["Tihana"])
     one_campaign.update_player_actor("Gamemaster",["Goblin", "Orc", "Dragon"])
-    one_campaign.show_player_stats()
 
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin, one_campaign)

@@ -1,6 +1,6 @@
 #! python3
 # roll_identification.py 
-# These are Campaign Wrapped's role-identifying functions. 
+# These are Campaign Wrapped's roll-identifying functions. 
 
 import datetime
 import classes
@@ -67,8 +67,8 @@ def initialize_roll(log):
                 init_generic_roll(log, "Ability Test")
             case "Caster":
                 init_generic_roll(log, "Caster Level Check")
-            case "Combat" | "Maneuver" | "Bonus": 
-                init_generic_roll(log, "Combat Maneuver Bonus")
+            #case "Combat" | "Maneuver" | "Bonus": 
+                #init_generic_roll(log, "Combat Maneuver Bonus")
             case _:
                 return
     return
@@ -180,9 +180,7 @@ def init_save_roll(log):
     mod_result_line = mod_result_line[0].split("=")
     result_w_mods = int(mod_result_line[2].strip())
 
-    save_roll = classes.die_roll(dx_type, dx_result, result_w_mods)
-
     log.update_type(saving_throw_type)
-    log.add_roll(save_roll)
+    log.add_roll(classes.die_roll(dx_type,dx_result,result_w_mods))
     
     return

@@ -18,6 +18,7 @@ class campaign():
         # create that gm 
         gamemaster = player("Gamemaster", self.name)
         self.players_list.append(gamemaster)
+        return
     
     def update_player_actor(self, player_name, actors_list):
         for player_obj in self.players_list: 
@@ -26,6 +27,7 @@ class campaign():
         
         for actor_name in actors_list:
             player_to_update.add_actor_from_campaign(actor_name)
+        return
 
     def show_player_stats(self):
         for player in self.players_list:
@@ -38,6 +40,7 @@ class campaign():
                 print("Natural 1s rolled:", actor.nat_one_count)
                 print("Natural 20s rolled:", actor.nat_twenty_count)
                 print("Natural 100s rolled:", actor.nat_hundred_count)
+        return
 
     def list_player_actors(self):
         campaign_actors = []
@@ -66,6 +69,7 @@ class player():
         
         # we'll add actors later as a function 
         self.actors_list = []
+        return
         
     def add_actor_from_campaign(self, actor_name):
         actor_exists = isinstance(actor_name, actor)
@@ -108,12 +112,13 @@ class actor():
         self.nat_one_count = 0
         self.nat_twenty_count = 0
         self.nat_hundred_count = 0
+        return
 
 class log_entry():
     acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
                         "Fortitude Saving Throw", 'Unknown Saving Throw', "Skill Check", "Attack",
                         "Spell Cast", "Item / Potion Used", "Raw Roll", "Chat Message", "Ability Test",
-                        "Combat Maneuver", "Caster Level Check", "Defenses", "Concentration Check", "Error"]
+                        "Combat Maneuver Bonus", "Caster Level Check", "Defenses", "Concentration Check", "Error"]
     
     def add_roll(self, roll_object):
         if len(self.roll_bin) >= 0:
@@ -139,12 +144,12 @@ class log_entry():
             self.entry_type = "Unknown"
         return self.entry_type
 
-    def __init__(self, date_time, actor, log_lines, entry_type, roll_bin=[]):
+    def __init__(self, date_time, actor, log_lines, entry_type):
         self.date_time = date_time
         self.actor = actor
         self.log_lines = log_lines 
-        self.roll_bin = roll_bin
-        self.roll_count = len(roll_bin)
+        self.roll_bin = []
+        self.roll_count = 0
         self.nat_one_count = 0
         self.nat_twenty_count = 0
         self.nat_hundred_count = 0
@@ -154,9 +159,10 @@ class log_entry():
             self.entry_type = "Error"
         else: 
             self.entry_type = "Unknown"
+        return
 
 class die_roll():
-    def __init__(self, dx_type, dx_result, result_w_mods=0):
+    def __init__(self, dx_type, dx_result, result_w_mods):
         self.dx_type = dx_type
         self.dx_result = dx_result
         if result_w_mods:
@@ -168,19 +174,16 @@ class die_roll():
         self.nat_hundred_flag = False
 
         self.nat_one_flag, self.nat_twenty_flag, self.nat_hundred_flag = self.notable_rolls(dx_type, dx_result)
+        return
     
     def notable_rolls(self, dx_type, dx_result):
-        nat_one_flag = False
-        nat_twenty_flag = False
-        nat_hundred_flag = False
-
         if dx_result == 1:
-            nat_one_flag = True
+            self.nat_one_flag = True
         
         if dx_result == 20 and dx_type == "d20":
-            nat_twenty_flag = True
+            self.nat_twenty_flag = True
         
         if dx_result == 100 and dx_type == "d100":
-            nat_hundred_flag = True
+            self.nat_hundred_flag = True
 
-        return nat_one_flag, nat_twenty_flag, nat_hundred_flag
+        return self.nat_one_flag, self.nat_twenty_flag, self.nat_hundred_flag
