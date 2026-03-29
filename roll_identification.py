@@ -61,14 +61,19 @@ def initialize_roll(log):
         match keyword:
             case "Saving" | "Throw":
                 init_save_roll(log)
+                break
             case "Concentration":
                 init_generic_roll(log, "Concentration Check")
+                break
             case "Ability" | "Test": 
                 init_generic_roll(log, "Ability Test")
+                break
             case "Caster":
                 init_generic_roll(log, "Caster Level Check")
-            #case "Combat" | "Maneuver" | "Bonus": 
-                #init_generic_roll(log, "Combat Maneuver Bonus")
+                break
+            case "Combat" | "Maneuver" | "Bonus": 
+                init_generic_roll(log, "Combat Maneuver Bonus")
+                break
             case _:
                 return
     return
