@@ -32,19 +32,38 @@ class campaign():
             player_to_update.add_actor_from_campaign(actor_name)
         return
 
-    def show_player_stats(self):
-        for player in self.players_list:
-            print(player.name)
-            for actor in player.actors_list:
+    def show_player_stats(self, specific_player_name=""):
+        # optionally pass a specific player's name to see one player, or don't and get all players' rolls
+        if specific_player_name:
+            for player in self.players_list:
+                if player.name == specific_player_name:
+                    specific_player = player
+            for actor in specific_player.actors_list: 
                 if(actor.roll_count == 0):
                     break
                 print(actor.name)
-                print("Total rolls:", actor.roll_count)
+                print("Total initialized rolls:", actor.roll_count)
                 print("Natural 1s rolled:", actor.nat_one_count)
                 print("Natural 20s rolled:", actor.nat_twenty_count)
                 print("Natural 100s rolled:", actor.nat_hundred_count)
                 print("Error rolls:", actor.error_count)
                 print("Unknown rolls:", actor.unknown_count)
+                print("Total rolls:", (actor.roll_count+actor.unknown_count+actor.error_count))
+
+                
+        else:
+            for player in self.players_list:
+                print(player.name)
+                for actor in player.actors_list:
+                    if(actor.roll_count == 0):
+                        break
+                    print(actor.name)
+                    print("Total initialized rolls:", actor.roll_count)
+                    print("Natural 1s rolled:", actor.nat_one_count)
+                    print("Natural 20s rolled:", actor.nat_twenty_count)
+                    print("Natural 100s rolled:", actor.nat_hundred_count)
+                    print("Error rolls:", actor.error_count)
+                    print("Unknown rolls:", actor.unknown_count)
         return
 
     def list_player_actors(self):
@@ -105,6 +124,11 @@ class actor():
             self.error_count += 1
         if log_entry.unknown_count: 
             self.unknown_count += 1
+
+        for log_type in log_entry.acceptable_types: 
+            if log_type == log_entry.entry_type:
+                # let's add to some sort of log type counter per actor 
+                print(log_entry.entry_type)
         return 
 
     def __init__(self, name, player, logs_bin=[]):
