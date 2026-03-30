@@ -11,7 +11,7 @@ import os
 import roll_identification
 import classes
 
-global src_file
+global src_files
 
 def log_handler(log_bin, this_campaign): 
     for log in log_bin:
@@ -54,6 +54,12 @@ def pull_log_lines(src_file):
     input_file.close()
     return log_bin
 
+def return_log_w_actor(log_entry):
+    target_actor = "Tihana"
+    actor_name = log_entry.actor
+    if actor_name == (target_actor):
+        return log_entry
+
 def main():
     src_file = "data/FirstWorld_Mod.txt"
 
@@ -69,5 +75,11 @@ def main():
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin, one_campaign)
 
-    one_campaign.show_player_stats()
+    one_campaign.show_player_stats("M1")
+
+    # let's use filter to look through log_bin and make sure that we actually do have all rolls accounted for 
+    actor_logs = filter(return_log_w_actor, log_bin)
+    print("Number of Tihana-related logs:", len(list(actor_logs)))
+
+
 main()
