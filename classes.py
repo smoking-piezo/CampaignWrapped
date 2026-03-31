@@ -4,6 +4,7 @@
 
 # TODO
 # add a function to player class to tally up the stats from each actor and make player stats 
+# add total rolls to actor stats 
 
 from dataclasses import dataclass
 
@@ -49,7 +50,9 @@ class campaign():
                 print("Error rolls:", actor.error_count)
                 print("Unknown rolls:", actor.unknown_count)
                 print("Total rolls:", (actor.roll_count+actor.unknown_count+actor.error_count))
-
+                for type in log_entry.acceptable_types:
+                        num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
+                        print("Number of", type, "rolls:", num_of_type)
                 
         else:
             for player in self.players_list:
@@ -128,7 +131,8 @@ class actor():
         for log_type in log_entry.acceptable_types: 
             if log_type == log_entry.entry_type:
                 # let's add to some sort of log type counter per actor 
-                print(log_entry.entry_type)
+                #print(log_entry.entry_type)
+                break
         return 
 
     def __init__(self, name, player, logs_bin=[]):
