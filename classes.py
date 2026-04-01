@@ -44,10 +44,9 @@ class campaign():
                     break
                 print(actor.name)
                 counters_types = list(actor.counters)
-                print("Total initialized rolls:", actor.roll_count)
                 print("Total actor-related logs:", (actor.roll_count+actor.unknown_count+actor.error_count))
-                print("Total un-initialized (unknown) rolls:", (actor.roll_count+actor.unknown_count+actor.error_count)-actor.roll_count)
-                print("Just to be paranoid, initialized + un-initialized rolls total:", (actor.roll_count+actor.unknown_count+actor.error_count))
+                print("Total roll count in logs:", actor.roll_count)
+                print("Total unknown type logs:", (actor.unknown_count+actor.error_count))
                 for type in counters_types:
                     actor.counters[type] += log_entry.counters[type]
                 for type in log_entry.acceptable_types:
