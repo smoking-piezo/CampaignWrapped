@@ -127,12 +127,6 @@ class actor():
             self.error_count += 1
         if log_entry.unknown_count: 
             self.unknown_count += 1
-
-        for log_type in log_entry.acceptable_types: 
-            if log_type == log_entry.entry_type:
-                # let's add to some sort of log type counter per actor 
-                #print(log_entry.entry_type)
-                break
         return 
 
     def __init__(self, name, player, logs_bin=[]):
