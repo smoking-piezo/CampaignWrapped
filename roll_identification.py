@@ -94,13 +94,13 @@ def initialize_roll(log):
             case "Skill":
                 init_generic_roll(log, "Skill Check")
                 break
+            case "(Use)" | "(Drink)":
+                init_use_roll(log, keyword)
             case _:
                 continue
         #print(keyword)
     return
     '''
-            case "Skill":
-                init_skill_check(log)
             case "(Use)" | "(Drink)":
                 init_use_save_roll(log)
             case "Up" | "Report"
@@ -210,3 +210,15 @@ def init_save_roll(log, roll_id_split):
     log.add_roll(classes.die_roll(dx_type,dx_result,result_w_mods))
     
     return
+
+def init_use_roll(log, keyword):
+    # this roll is either an item usage, a class feature usage, OR a spell cast 
+    
+    # if (Drink) is in the roll_id then it means a potion was drunk and we're just gonna call that an item use
+    # there MAY be a roll associated with the potion usage depending on the type of potion 
+    # a cure potion will have a line that says "healing X" but it only gives the result in X. there are likely more cases of this
+    if keyword == "(Drink)":
+        roll_type = "Item Used"
+
+    # otherwise the keyword was (Use) and we gotta figure out how to figure out if this is an item, a spell, or a class feature
+    # maybe we find a way to import the reference compendiums and search em? 
