@@ -1,0 +1,153 @@
+#! python3
+# classvars.py  
+# class variables vs instantiated variables
+
+from dataclasses import dataclass
+
+@dataclass
+class actor():
+    nat_one_count = 0
+    nat_twenty_count = 0
+    nat_hundred_count = 0
+    error_count = 0 
+    unknown_count = 0 
+    log_counters = [nat_one_count, nat_twenty_count, nat_hundred_count, error_count, unknown_count]
+    def __init__(self, name, player, logs_bin=[]):
+        self.name = name
+        self.player = player 
+        self.logs_bin = logs_bin
+        logs_count = len(logs_bin)
+        if logs_count > 0:
+            for i in range(0,logs_count): 
+                roll_count += logs_bin[i].roll_count
+        else:
+            roll_count = 0
+        self.roll_count = roll_count
+        return
+    
+    def add_log(self, log_entry):
+        if self.logs_bin:
+            self.logs_bin.append(log_entry)
+        else:
+            self.logs_bin = [log_entry]
+        self.logs_count = len(self.logs_bin)
+        self.roll_count = self.roll_count + log_entry.roll_count
+
+        if log_entry.nat_one_count: 
+            self.nat_one_count += log_entry.nat_one_count
+        if log_entry.nat_twenty_count:
+            self.nat_twenty_count += log_entry.nat_twenty_count
+        if log_entry.nat_hundred_count:
+            self.nat_hundred_count += log_entry.nat_hundred_count
+        if log_entry.error_count:
+            self.error_count += 1
+        if log_entry.unknown_count: 
+            self.unknown_count += 1
+        return 
+    
+class log_entry():
+    acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
+                        "Fortitude Saving Throw", 'Unknown Saving Throw', "Skill Check", "Attack",
+                        "Spell Cast", "Item / Potion Used", "Raw Roll", "Chat Message", "Ability Test",
+                        "Combat Maneuver Bonus", "Caster Level Check", "Defenses", "Concentration Check", "Error"]
+    
+    nat_one_count = 0
+    nat_twenty_count = 0
+    nat_hundred_count = 0
+    error_count = 0 
+    unknown_count = 0 
+    counters = {'Natural One Count': nat_one_count, 'Natural Twenty Count': nat_twenty_count, 'Natural Hundred Count': nat_hundred_count}
+    # missing unknown_count, error_count 
+    
+    def add_roll(self, roll_object):
+        if len(self.roll_bin) >= 0:
+            self.roll_bin.append(roll_object)
+        else:
+            self.roll_bin = [roll_object]
+        self.roll_count = len(self.roll_bin)
+        counter_types = list(self.counters.keys())
+        for type in counter_types:
+            print(self.counters[type])
+            self.counters[type] += roll_object.counters[type]
+            print(self.counters[type]) 
+
+        return 
+    
+    def update_type(self, roll_type):
+        if self.entry_type == "Error":
+            self.error_count = self.error_count - 1
+        if self.entry_type == "Unknown":
+            self.unknown_count = self.unknown_count - 1
+
+        if roll_type in self.acceptable_types:
+            self.entry_type = roll_type
+            
+        elif roll_type:
+            self.entry_type = "Error"
+            self.error_count += 1
+            print(self.date_time)
+        else: 
+            self.entry_type = "Unknown"
+            self.unknown_count += 1
+        return self.entry_type
+
+    def __init__(self, date_time, actor, log_lines, entry_type):
+        self.date_time = date_time
+        self.actor = actor
+        self.log_lines = log_lines 
+        self.roll_bin = []
+        if entry_type in self.acceptable_types:
+            self.entry_type = entry_type
+        elif entry_type:
+            self.entry_type = "Error"
+            self.error_count += 1
+        else: 
+            self.entry_type = "Unknown"
+            self.unknown_count += 1
+        return
+    
+class die_roll():
+    nat_one_count = 0
+    nat_twenty_count = 0
+    nat_hundred_count = 0
+    counters = {'Natural One Count': nat_one_count, 'Natural Twenty Count': nat_twenty_count, 'Natural Hundred Count': nat_hundred_count}
+
+    def __init__(self, dx_type, dx_result, result_w_mods):
+        self.dx_type = dx_type
+        self.dx_result = dx_result
+        if result_w_mods:
+            self.result_w_mods = result_w_mods
+        else: 
+            self.result_w_mods = dx_result
+
+        self.nat_one_count, self.nat_twenty_count, self.nat_hundred_count = self.notable_rolls(dx_type, dx_result)
+        return
+    
+    def notable_rolls(self, dx_type, dx_result):
+        if dx_result == 1:
+            self.nat_one_count += 1
+            self.counters['Natural One Count'] = self.nat_one_count
+        
+        if dx_result == 20 and dx_type == "d20":
+            self.nat_twenty_count += 1
+            self.counters['Natural Twenty Count'] = self.nat_twenty_count
+
+        
+        if dx_result == 100 and dx_type == "d100":
+            self.nat_hundred_count += 1
+            self.counters['Natural Hundred Count'] = self.nat_hundred_count
+
+
+        return self.nat_one_count, self.nat_twenty_count, self.nat_hundred_count
+    
+def main():
+    sample_actor = actor("Name", "Player")
+    a_roll = ['----', '(2020, 12, 10)', 'NPCRoller', 'attack', 'attack 20 damage 15', 'pew pew']
+    a_log = log_entry(a_roll[1], a_roll[2], a_roll, "Attack")
+    a_roll = die_roll("d20", 20, 20)
+    a_log.add_roll(a_roll)
+    sample_actor.add_log(a_log)
+
+    print(sample_actor.nat_twenty_count, sample_actor.nat_one_count)
+
+main()
