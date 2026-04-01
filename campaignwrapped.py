@@ -55,7 +55,7 @@ def pull_log_lines(src_file):
     return log_bin
 
 def return_log_w_actor(log_entry):
-    target_actor = "Tihana"
+    target_actor = "Gage"
     actor_name = log_entry.actor
     if actor_name == (target_actor):
         return log_entry
@@ -70,16 +70,16 @@ def main():
     one_campaign.update_player_actor("H1",["Valeric"])
     one_campaign.update_player_actor("D1", ["Gage"])
     one_campaign.update_player_actor("M1", ["Tihana"])
-    one_campaign.update_player_actor("Gamemaster",["Goblin", "Orc", "Dragon"])
+    #one_campaign.update_player_actor("Gamemaster",["Goblin", "Orc", "Dragon"])
 
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin, one_campaign)
 
-    one_campaign.show_player_stats("M1")
+    one_campaign.show_player_stats("D1")
 
     # let's use filter to look through log_bin and make sure that we actually do have all rolls accounted for 
     actor_logs = filter(return_log_w_actor, log_bin)
-    print("Number of Tihana-related logs:", len(list(actor_logs)))
+    print("Number of Gage-related logs:", len(list(actor_logs)))
 
 
 main()

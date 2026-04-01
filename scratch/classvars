@@ -81,14 +81,8 @@ class log_entry():
         self.actor = actor
         self.log_lines = log_lines 
         self.roll_bin = []
-        if entry_type in self.acceptable_types:
-            self.entry_type = entry_type
-        elif entry_type:
-            self.entry_type = "Error"
-            self.error_count += 1
-        else: 
-            self.entry_type = "Unknown"
-            self.unknown_count += 1
+        self.entry_type = "Unknown"
+        self.entry_type = self.update_type(entry_type)
         return
     
 class die_roll():
@@ -127,5 +121,6 @@ def main():
     print("Roll Nat 20 Count", a_roll.counters["Natural 20 Count"])
     print("Log Nat 20 Count", a_log.counters["Natural 20 Count"])
     print("Actor Nat 20 Count", sample_actor.counters["Natural 20 Count"])
+    print("Log roll type", a_log.entry_type)
 
 main()
