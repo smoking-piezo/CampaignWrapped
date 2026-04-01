@@ -146,7 +146,7 @@ class actor():
 class log_entry():
     acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
                         "Fortitude Saving Throw", 'Unknown Saving Throw', "Skill Check", "Attack",
-                        "Spell Cast", "Item / Potion Used", "Raw Roll", "Chat Message", "Ability Test",
+                        "Spell Cast", "Item Used", "Raw Roll", "Chat Message", "Ability Test",
                         "Combat Maneuver Bonus", "Caster Level Check", "Defenses", "Concentration Check", "Error"]
     error_flag = False 
     unknown_flag = True 
