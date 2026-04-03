@@ -13,18 +13,21 @@ import classes
 
 global src_files
 
-def log_handler(log_bin, this_campaign): 
+def log_handler(log_bin, campaigns_bin): 
     for log in log_bin:
         log.date_time = roll_identification.find_roll_date(log.log_lines)
         log.actor = roll_identification.find_actor(log.log_lines)
         roll_identification.initialize_roll(log)
-        if log.actor in this_campaign.list_player_actors():
-            actor_obj = this_campaign.fetch_actor(log.actor)
-            actor_obj.add_log(log)
+        for this_campaign in campaigns_bin:
+            if log.actor in this_campaign.list_player_actors():
+                actor_obj = this_campaign.fetch_actor(log.actor)
+                actor_obj.add_log(log)
         #else:
             # this is where we figure out if this log belongs to a different campaign or the gm 
-            # first let's just assign it to the gm 
-            #print(log.actor)
+            # okay, what if we created all the campaigns in a list passed to the log handler 
+            # if it's not in the list_player_actors, pick a known PC from that campaign and get the most recent roll date
+            # if the roll date matches, but it doesn't match a PC, then let's assign it to that campaign's GM 
+
     return log_bin
 
 def pull_log_lines(src_file):
@@ -54,32 +57,42 @@ def pull_log_lines(src_file):
     input_file.close()
     return log_bin
 
-def return_log_w_actor(log_entry):
-    target_actor = "Gage"
-    actor_name = log_entry.actor
-    if actor_name == (target_actor):
-        return log_entry
+def return_dates(log_entry):
+    return log_entry.date_time
 
 def main():
     src_file = "data/FirstWorld_Mod.txt"
 
     log_bin = []
 
-    one_campaign = classes.campaign("Hell's Rebels", ["H1", "Z1", "D1", "M1"])
-    one_campaign.update_player_actor("Z1", ["Namielle", "Ercia Kash"])
-    one_campaign.update_player_actor("H1",["Valeric"])
-    one_campaign.update_player_actor("D1", ["Gage"])
-    one_campaign.update_player_actor("M1", ["Tihana"])
-    #one_campaign.update_player_actor("Gamemaster",["Goblin", "Orc", "Dragon"])
+    hells_rebels = classes.campaign("Hell's Rebels", ["H1", "Z1", "D1", "M1"])
+    hells_rebels.update_player_actor("Z1", ["Namielle", "Ercia Kash"])
+    hells_rebels.update_player_actor("H1",["Valeric"])
+    hells_rebels.update_player_actor("D1", ["Gage"])
+    hells_rebels.update_player_actor("M1", ["Tihana"])
+
+    iron_gods = classes.campaign("Iron Gods", ["H1", "Z1", "D1", "M1"])
+    iron_gods.update_player_actor("H1", ["Construct", "Harnok"])
+    iron_gods.update_player_actor("Z1", ["Sassiel GreeTrink"])
+    iron_gods.update_player_actor("D1", ["Rory"])
+    iron_gods.update_player_actor("M1", ["Verna", "Irontrunk", "Hazal/Verna/Suvi/Talvi"])
+    
+    ruins_azlant = classes.campaign("Ruins of Azlant", ["H1", "Z1", "D1", "M1"])
+    ruins_azlant.update_player_actor("H1", ["Garzu"])
+    ruins_azlant.update_player_actor("Z1", ["Kurina"])
+    ruins_azlant.update_player_actor("D1", ["Kazell"])
+    ruins_azlant.update_player_actor("M1", ["Mavuto"])
+
+    campaigns_bin = [hells_rebels, iron_gods, ruins_azlant]
 
     log_bin = pull_log_lines(src_file)
-    log_bin = log_handler(log_bin, one_campaign)
+    log_bin = log_handler(log_bin, campaigns_bin)
 
-    one_campaign.show_player_stats("D1")
+    hells_rebels.show_player_stats("D1")
+    iron_gods.show_player_stats("M1")
 
-    # let's use filter to look through log_bin and make sure that we actually do have all rolls accounted for 
-    actor_logs = filter(return_log_w_actor, log_bin)
-    print("Number of Gage-related logs:", len(list(actor_logs)))
+    gage = hells_rebels.fetch_actor("Gage")
 
+    hells_rebels_dates = filter(return_dates, gage.logs_bin)
 
 main()
