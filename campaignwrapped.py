@@ -6,7 +6,7 @@
 # how are we gonna handle tallying up the types of skill checks by skill types? 
 # differentiate campaigns by date/character?
 
-import datetime
+from datetime import datetime
 import os
 import roll_identification
 import classes
@@ -19,10 +19,12 @@ def log_handler(log_bin, campaigns_bin):
         log.actor = roll_identification.find_actor(log.log_lines)
         roll_identification.initialize_roll(log)
         for this_campaign in campaigns_bin:
-            if log.actor in this_campaign.list_player_actors():
+            # if the actor's name is in the campaign's PC list and the log's date is after the start date of the campaign
+            # but honestly we should do some better date handling probably 
+            if log.actor in this_campaign.list_player_actors() and log.date_time > this_campaign.start_date: 
                 actor_obj = this_campaign.fetch_actor(log.actor)
                 actor_obj.add_log(log)
-        #else:
+            #else:
             # this is where we figure out if this log belongs to a different campaign or the gm 
             # okay, what if we created all the campaigns in a list passed to the log handler 
             # if it's not in the list_player_actors, pick a known PC from that campaign and get the most recent roll date
@@ -65,19 +67,19 @@ def main():
 
     log_bin = []
 
-    hells_rebels = classes.campaign("Hell's Rebels", ["H1", "Z1", "D1", "M1"])
+    hells_rebels = classes.campaign("Hell's Rebels", datetime(2022, 8, 8), ["H1", "Z1", "D1", "M1"])
     hells_rebels.update_player_actor("Z1", ["Namielle", "Ercia Kash"])
     hells_rebels.update_player_actor("H1",["Valeric"])
     hells_rebels.update_player_actor("D1", ["Gage"])
     hells_rebels.update_player_actor("M1", ["Tihana"])
 
-    iron_gods = classes.campaign("Iron Gods", ["H1", "Z1", "D1", "M1"])
+    iron_gods = classes.campaign("Iron Gods", datetime(2024, 1, 8), ["H1", "Z1", "D1", "M1"])
     iron_gods.update_player_actor("H1", ["Construct", "Harnok"])
     iron_gods.update_player_actor("Z1", ["Sassiel GreeTrink"])
     iron_gods.update_player_actor("D1", ["Rory"])
     iron_gods.update_player_actor("M1", ["Verna", "Irontrunk", "Hazal/Verna/Suvi/Talvi"])
     
-    ruins_azlant = classes.campaign("Ruins of Azlant", ["H1", "Z1", "D1", "M1"])
+    ruins_azlant = classes.campaign("Ruins of Azlant", datetime(2024, 9, 5), ["H1", "Z1", "D1", "M1"])
     ruins_azlant.update_player_actor("H1", ["Garzu"])
     ruins_azlant.update_player_actor("Z1", ["Kurina"])
     ruins_azlant.update_player_actor("D1", ["Kazell"])
@@ -88,11 +90,11 @@ def main():
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin, campaigns_bin)
 
-    hells_rebels.show_player_stats("D1")
-    iron_gods.show_player_stats("M1")
+    hells_rebels.show_player_stats("H1")
+    iron_gods.show_player_stats("D1")
 
-    gage = hells_rebels.fetch_actor("Gage")
+    #gage = hells_rebels.fetch_actor("Gage")
 
-    hells_rebels_dates = filter(return_dates, gage.logs_bin)
+    #hells_rebels_dates = filter(return_dates, gage.logs_bin)
 
 main()
