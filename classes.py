@@ -44,7 +44,7 @@ class campaign():
                     break
                 print(actor.name)
                 counters_types = list(actor.counters)
-                print("Total actor-related logs:", (actor.roll_count+actor.unknown_count+actor.error_count))
+                print("Total actor-related logs:", (actor.logs_count))
                 print("Total roll count in logs:", actor.roll_count)
                 print("Total unknown type logs:", (actor.unknown_count+actor.error_count))
                 for type in counters_types:
