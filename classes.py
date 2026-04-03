@@ -11,7 +11,7 @@ import datetime
 
 @dataclass
 class campaign():
-    def __init__(self, name, player_names):
+    def __init__(self, name, start_date, player_names):
         self.name = name
         self.players_list = []
 
@@ -23,6 +23,7 @@ class campaign():
         # create that gm 
         gamemaster = player("Gamemaster", self.name)
         self.players_list.append(gamemaster)
+        self.start_date = start_date
         return
     
     def update_player_actor(self, player_name, actors_list):
