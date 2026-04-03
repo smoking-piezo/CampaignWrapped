@@ -129,17 +129,12 @@ class actor():
             self.unknown_count += 1
         return 
 
-    def __init__(self, name, player, logs_bin=[]):
+    def __init__(self, name, player):
         self.name = name
         self.player = player 
-        self.logs_bin = logs_bin
-        logs_count = len(logs_bin)
-        if logs_count > 0:
-            for i in range(0,logs_count): 
-                roll_count += logs_bin[i].roll_count
-        else:
-            roll_count = 0
-        self.roll_count = roll_count
+        self.logs_bin = []
+        self.logs_count = 0
+        self.roll_count = 0
         return
 
 class log_entry():
