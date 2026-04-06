@@ -1,223 +1,255 @@
 #! python3
-# roll_identification.py 
-# These are Campaign Wrapped's roll-identifying functions. 
+# classes.py
+# Class definitions for Campaign Wrapped
 
-import datetime, classes
+# TODO
+# add a function to player class to tally up the stats from each actor and make player stats 
+# add total rolls to actor stats 
 
-def find_actor(log_lines):
-    txt = log_lines[1]
-    actor = txt.split("]")
-    actor = actor[1].strip()
+from dataclasses import dataclass
+import datetime
 
-    return actor
+@dataclass
+class campaign():
+    def __init__(self, name, start_date, player_names):
+        self.name = name
+        self.players_list = []
 
-def find_roll_date(log_lines): 
-    # Date is found in the 1st line of the roll, formatted line  [X/X/202X, XX:XX:XX] Roller_Name  
-    txt = log_lines[1]
-    month_str_pos = txt.rfind("/", 0, 4)
-    month = int(txt[1:month_str_pos])
+        # we're assuming that the campaign gets made first, before any players, so we'll make players as part of this
+        for player_name in player_names:
+            # create player object, add to player list
+            new_player = player(player_name, self.name)
+            self.players_list.append(new_player)
+        # create that gm 
+        gamemaster = player("Gamemaster", self.name)
+        self.players_list.append(gamemaster)
+        self.start_date = start_date
+        return
+    
+    def update_player_actor(self, player_name, actors_list):
+        for player_obj in self.players_list: 
+            if player_obj.name == player_name:
+                player_to_update = player_obj
+        
+        for actor_name in actors_list:
+            player_to_update.add_actor_from_campaign(actor_name)
+        return
 
-    day_str_pos = txt.rfind("/", month_str_pos, 10)
-    day = int(txt[month_str_pos+1:day_str_pos])
+    def show_player_stats(self, specific_player_name=""):
+        # optionally pass a specific player's name to see one player, or don't and get all players' rolls
+        if specific_player_name:
+            for player in self.players_list:
+                if player.name == specific_player_name:
+                    specific_player = player
+            for actor in specific_player.actors_list: 
+                if(actor.roll_count == 0):
+                    break
+                print(actor.name)
+                counters_types = list(actor.counters)
+                print("Total actor-related logs:", (actor.logs_count))
+                print("Total roll count in logs:", actor.roll_count)
+                print("Total unknown type logs:", (actor.unknown_count+actor.error_count))
+                for type in counters_types:
+                    # error here
+                    # do we need to do another for loop through the actor's log bin? 
+                    actor.counters[type] += len([log_with_counter for log_with_counter in actor.logs_bin if log_with_counter.counters[type] > 0])
+                for type in log_entry.acceptable_types:
+                    num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
+                    print("Number of", type, "rolls:", num_of_type)
+                
+        else:
+            for player in self.players_list:
+                print(player.name)
+                for actor in player.actors_list:
+                    if(actor.roll_count == 0):
+                        break
+                    print(actor.name)
+                    counters_types = list(actor.counters)
+                    for type in counters_types:
+                        actor.counters[type] += len([log_with_counter for log_with_counter in actor.logs_bin if log_with_counter.counters[type] > 0])
+                    for type in log_entry.acceptable_types:
+                        num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
+                        print("Number of", type, "rolls:", num_of_type)
+                    
+        return
 
-    year_str_pos = txt.rfind("/", day_str_pos, 15)
-    year = int(txt[year_str_pos+1:year_str_pos+5])
+    def list_player_actors(self):
+        campaign_actors = []
+        # we care only about the actors that aren't the gamemaster 
+        for player in self.players_list:
+            if player.name == "Gamemaster":
+                break
+            for actor in player.actors_list:
+                campaign_actors.append(actor.name)
+        return campaign_actors 
+    
+    def fetch_actor(self, actor_name):
+        for player in self.players_list:
+            for actor in player.actors_list:
+                if actor.name == actor_name:
+                    return actor 
+                
+    def fetch_player(self, player_name):
+        for player in self.players_list:
+            if player.name == player_name:
+                return player
 
-    hour_str_pos_start = int(txt.index(","))+1
-    hour_str_pos_end = int(txt.index(":"))
-    hour =int(txt[hour_str_pos_start:hour_str_pos_end])
+class player():
+    def __init__(self, name, campaign):
+        # start the player object with the name of the player and name of its campaign
+        self.name = name
+        
+        # how do we manage making sure a player is added to multiple campaigns? what if the desired campaign object hasn't been made yet? 
+        # just say NO to multiple campaigns and make a new player object for each campaign 
+        self.campaign = campaign
+        
+        # we'll add actors later as a function 
+        self.actors_list = []
+        return
+        
+    def add_actor_from_campaign(self, actor_name):
+        actor_exists = isinstance(actor_name, actor)
+        if actor_exists:
+            if actor_name not in self.actors_list:
+                self.actors_list.append(actor_name)
+        else: 
+            new_actor = actor(actor_name, self.name)
+            self.actors_list.append(new_actor)
+        return  
+    
+    def show_player_stats(self):
+        counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        counters_types = list(counters.keys())
+        roll_types = tuple(log_entry.acceptable_types)
+        roll_types_count = {}
+        for key in roll_types:
+                roll_types_count[key] = 0
+        if len(self.actors_list) > 1: 
+            # if there's more than one actor, let's sum up all the counts
+            print(self.name, "has the following actors:")           
+            for each in self.actors_list:
+                print(each.name)
+                for type in counters_types:
+                    counters[type] += len([log_with_counter for log_with_counter in each.logs_bin if log_with_counter.counters[type] > 0])
+                for type in roll_types:
+                    num_of_type = len([log_entry_type for log_entry_type in each.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == each.name])
+                    roll_types_count[type] += num_of_type
+            print(counters, roll_types_count)   
+        elif len(self.actors_list) == 1:
+            # if there's only one actor, show that actor's stats
+            self.actors_list[0].show_actor_stats()
+        elif len(self.actors_list) == 0:
+            print(self.name, "has no actor objects.")
+            
+class actor():
 
-    min_str_pos_start = hour_str_pos_end+1
-    min_str_pos_end = hour_str_pos_end+3
-    min = int(txt[min_str_pos_start:min_str_pos_end])
+    def __init__(self, name, player):
+        self.name = name
+        self.player = player 
+        self.logs_bin = []
+        self.logs_count = 0
+        self.roll_count = 0
+        self.counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        self.error_count = 0 
+        self.unknown_count = 0 
+        return
 
-    sec_str_pos_start = min_str_pos_end+1
-    sec_str_pos_end = sec_str_pos_start+2
-    sec = int(txt[sec_str_pos_start:sec_str_pos_end])
-
-    roll_date = datetime.datetime(year, month, day, hour, min, sec)
-
-    return roll_date
-
-def initialize_roll(log):
-    # so initially this function was just intended to find the TYPE of roll in the log, but 
-    # now I think we need to also initialize the roll fully. which is to say: 
-    # make sure all the dice objects associated with a roll are loaded into the log entry 
-    roll_id = log.log_lines[2]
-    roll_id_split = roll_id.split(" ")
-    roll_lines = log.log_lines
-
-    attack_keywords = ["Attack", "Claw", "Wing", "Bite", "Slam", "2nd Claw", "Thwack"]
-    save_keywords = ["Fortitude", "Reflex", "Will", "Saving Throw"]
-    show_keywords = ["School", "Source", "Description", "Price"]
-
-    init_check = [line for line in log.log_lines if line.startswith('Initiative')]
-    if init_check: 
-        init_generic_roll(log, "Initiative")
+    def add_log(self, log_entry):
+        self.logs_bin.append(log_entry)
+        self.logs_count = len(self.logs_bin)
+        self.roll_count = self.roll_count + log_entry.roll_count
+        counters_types = list(self.counters)
+        for type in counters_types:
+            self.counters[type] += log_entry.counters[type]
+            #print(self.name, type, self.counters[type])
+        if log_entry.error_flag:
+            self.error_count += 1
+        if log_entry.unknown_flag: 
+            self.unknown_count += 1
         return 
     
-    # if an actor "Took 10" or "Took 20" on a skill or other check then it'll show up in the roll_id line
-    # that'll cause an error, so let's trim that out 
-    keywords_to_remove = ["(Take", "10)", "20)"]
-    present_removable_keywords = []
+    def show_actor_stats(self):
+        print(self.name)
+        counters_types = list(self.counters)
+        print("Total actor-related logs:", (self.logs_count))
+        print("Total roll count in logs:", self.roll_count)
+        print("Total unknown type logs:", (self.unknown_count + self.error_count))
+        for type in counters_types:
+            self.counters[type] += log_entry.counters[type]
+        for type in log_entry.acceptable_types:
+            num_of_type = len([log_entry_type for log_entry_type in self.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == self.name])
+            print("Number of", type, "rolls:", num_of_type)
+        return
 
-    for index in range(0, len(roll_id_split)):
-        for removable_keyword in keywords_to_remove:
-            if roll_id_split[index] == removable_keyword:
-                # we can't just straight up remove the keywords from the list WHILE we're iterating through it or we get an index error
-                # so we make a list of the words that are in the roll_id and remove them later
-                # there's gotta be a better way to do this than ANOTHER for loop? oh well
-                present_removable_keywords.append(removable_keyword)
-
-    for each in present_removable_keywords:
-        roll_id_split.remove(each)  
-    # ok, now that we've done this, we have to pass it to whatever init function the roll goes to so we don't get this same error 
+class log_entry():
+    acceptable_types = ["Unknown", "Initiative", "Level Up", "Will Saving Throw", "Reflex Saving Throw", 
+                        "Fortitude Saving Throw", 'Unknown Saving Throw', "Skill Check", "Attack",
+                        "Spell Cast", "Item Used", "Raw Roll", "Chat Message", "Ability Test",
+                        "Combat Maneuver Bonus", "Caster Level Check", "Defenses", "Concentration Check", "Error"]
     
-    for keyword in roll_id_split:
-        match keyword:
-            case "Saving" | "Throw":
-                init_save_roll(log, roll_id_split)
-                break
-            case "Concentration":
-                init_generic_roll(log, "Concentration Check")
-                break
-            case "Ability" | "Test": 
-                init_generic_roll(log, "Ability Test")
-                break
-            case "Caster":
-                init_generic_roll(log, "Caster Level Check")
-                break
-            case "Combat" | "Maneuver" | "Bonus": 
-                init_generic_roll(log, "Combat Maneuver Bonus")
-                break
-            case "Skill":
-                init_generic_roll(log, "Skill Check")
-                break
-            case "(Use)" | "(Drink)":
-                init_use_roll(log, keyword)
-            case _:
-                continue
-        #print(keyword)
-    return
-    '''
-            case "(Use)" | "(Drink)":
-                init_use_save_roll(log)
-            case "Up" | "Report"
-                init_level_up(log)
-            case "Melee" | "Ranged":
-                init_attack(log)
 
-            case "Defenses":
-                init_message(log)
+    def __init__(self, date_time, actor, log_lines, entry_type):
+        self.date_time = date_time
+        self.actor = actor
+        self.log_lines = log_lines 
+        self.roll_bin = []
+        self.roll_count = 0
+        self.entry_type = "Unknown"
+        self.error_flag = False 
+        self.unknown_flag = True 
+        self.counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        self.entry_type = self.update_type(entry_type)
+        return
 
-    for line in range(0, len(roll_lines)):
-        attack_check = any(roll_lines[line].startswith(keyword) for keyword in attack_keywords)
-        show_check = any(roll_lines[line].startswith(keyword) for keyword in show_keywords)
-        
-        if attack_check:
-            init_attack(log)
-            return 
-        
-        if show_check:
-            init_message(log)
-    '''
-
-def init_generic_roll(log, roll_type):
-    # a generic roll is a type of roll that has a type attached to it, a single d20 roll, and not much else
-    # the following types of rolls will be handled: Concentration Checks, Ability Test, Caster Level Check, CMB/CMD
-
-    # to initialize a roll, we need to get the associated dice roll. this will probably be in the last line which starts with "1d20"
-    # we want to add the d20 roll and the result roll with modifiers 
-    # however, some of the older logs have an issue where the final line is missing information, so it'll be " =  = resultwmods"
-    # so we'll have to look for the OTHER line in the roll that starts with "1d20" and pick out the second string in the split 
-
-    dx_type = "d20"
-    result_line = [line for line in log.log_lines if line.startswith('1d20') and "=" in line]
-
-    try: 
-        result_line = result_line[0].split("=")
-
-    except IndexError:
-        # OK so if we're here, then we're at an old log. now we need to look at the log_lines:
-        # log_lines[3] will have the full roll, and the line after will start with 1d20 and give the roll
-        result_w_mods = int(log.log_lines[3])
-        result_line = [line for line in log.log_lines if line.startswith('1d20') and "=" not in line]
-        split_result_line = result_line[0].split(" ")
-        dx_result = split_result_line[1]
-
-    else: 
-        split_result_line = result_line[1].split("+")
-        dx_result = int(split_result_line[0].strip())
-        if roll_type == "Initiative":
-            result_w_mods = float(result_line[2])
+    def add_roll(self, roll_object):
+        if len(self.roll_bin) >= 0:
+            self.roll_bin.append(roll_object)
         else:
-            result_w_mods = int(result_line[2])
+            self.roll_bin = [roll_object]
+        self.roll_count = len(self.roll_bin)
+        counter_types = list(self.counters.keys())
+        for type in counter_types:
+            self.counters[type] += roll_object.counters[type]
+        return 
     
+    def update_type(self, roll_type):
+        if self.entry_type == "Error":
+            self.error_flag = True
+        if self.entry_type == "Unknown":
+            self.unknown_flag = True
+        if roll_type in self.acceptable_types:
+            self.entry_type = roll_type
+            self.unknown_flag = False
+            self.error_flag = False
+        elif roll_type:
+            self.entry_type = "Error"
+            self.error_flag = True
+            print(self.date_time)
+        else: 
+            self.entry_type = "Unknown"
+            self.unknown_flag = True
+        return self.entry_type
 
-    roll_obj = classes.die_roll(dx_type, dx_result, result_w_mods)
+class die_roll():
+
+    def __init__(self, dx_type, dx_result, result_w_mods):
+        self.dx_type = dx_type
+        self.dx_result = dx_result
+        if result_w_mods:
+            self.result_w_mods = result_w_mods
+        else: 
+            self.result_w_mods = dx_result
+        self.counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        self.counters = self.notable_rolls(dx_type, dx_result)
+        return
     
-    log.update_type(roll_type)
-    log.add_roll(roll_obj)
+    def notable_rolls(self, dx_type, dx_result):
+        if dx_result == 1:
+            self.counters['Natural 1 Count'] += 1
+        
+        if dx_result == 20 and dx_type == "d20":
+            self.counters['Natural 20 Count'] += 1
 
-    return 
-
-def init_save_roll(log, roll_id_split):
-    roll_lines = log.log_lines
-    roll_id = ' '.join(roll_id_split)
-    roll_len = len(roll_lines)
-    save_keywords = ["Constitution", "Dexterity", "Wisdom"]
-    saving_throw_type = ""
-    i = 0
-
-    if roll_id.startswith("Saving"):
-        # if it starts with "Saving Throw" then we need to figure out what kind of save it is from other clues
-        for i in range(0,roll_len):
-            # the below line is NOT catching the lines it should be 
-            save_check = any(roll_lines[i].startswith(keyword) for keyword in save_keywords)
-            if save_check:
-                save_type = roll_lines[i].split(" ")
-                save_type = save_type[0]
-                break
-            else:
-                save_type = "Other"
-
-        match save_type:
-            case "Constitution":
-                saving_throw_type = "Fortitude Saving Throw"
-            case "Dexterity":
-                saving_throw_type = "Reflex Saving Throw"
-            case "Wisdom":
-                saving_throw_type = "Will Saving Throw"
-            case _:
-                saving_throw_type = "Unknown Saving Throw"
-    else:
-        saving_throw_type = roll_id
-
-    dx_type = "d20"
-
-    # in the old log some of the early result lines got messed up and only the modified result is available 
-    # but the d20 roll is still there, just on a different line than expected 
-    dx_result_line = [line for line in roll_lines if line.startswith('1d20')]
-    dx_result_line = dx_result_line[0].split(" ")
-    dx_result = int(dx_result_line[1].strip())
-
-    mod_result_line = [line for line in roll_lines if "=" in line]
-    mod_result_line = mod_result_line[0].split("=")
-    result_w_mods = int(mod_result_line[2].strip())
-
-    log.update_type(saving_throw_type)
-    log.add_roll(classes.die_roll(dx_type,dx_result,result_w_mods))
-    
-    return
-
-def init_use_roll(log, keyword):
-    # this roll is either an item usage, a class feature usage, OR a spell cast 
-    
-    # if (Drink) is in the roll_id then it means a potion was drunk and we're just gonna call that an item use
-    # there MAY be a roll associated with the potion usage depending on the type of potion 
-    # a cure potion will have a line that says "healing X" but it only gives the result in X. there are likely more cases of this
-    if keyword == "(Drink)":
-        roll_type = "Item Used"
-
-    # otherwise the keyword was (Use) and we gotta figure out how to figure out if this is an item, a spell, or a class feature
-    # maybe we find a way to import the reference compendiums and search em? 
+        if dx_result == 100 and dx_type == "d100":
+            self.counters['Natural 100 Count'] += 1
+        return self.counters
