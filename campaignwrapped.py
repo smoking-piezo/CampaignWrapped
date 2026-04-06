@@ -73,8 +73,8 @@ def main():
     hells_rebels.update_player_actor("D1", ["Gage"])
     hells_rebels.update_player_actor("M1", ["Tihana"])
 
-    iron_gods = classes.campaign("Iron Gods", datetime(2024, 1, 8), ["H1", "Z1", "D1", "M1"])
-    iron_gods.update_player_actor("H1", ["Construct", "Harnok"])
+    iron_gods = classes.campaign("Iron Gods", datetime(2024, 1, 8), ["H-1", "Z1", "D1", "M1"])
+    iron_gods.update_player_actor("H-1", ["Construct", "Harnok"])
     iron_gods.update_player_actor("Z1", ["Sassiel GreeTrink"])
     iron_gods.update_player_actor("D1", ["Rory"])
     iron_gods.update_player_actor("M1", ["Verna", "Irontrunk", "Hazal/Verna/Suvi/Talvi"])
@@ -90,10 +90,14 @@ def main():
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin, campaigns_bin)
 
-    hells_rebels.show_player_stats("H1")
-    iron_gods.show_player_stats("D1")
+    #hells_rebels.show_player_stats("H1")
+    iron_gods.show_player_stats()
+
+    harnok = iron_gods.fetch_player("H-1")
+    harnok.show_player_stats()
 
     #gage = hells_rebels.fetch_actor("Gage")
+    #gage.show_actor_stats()
 
     #hells_rebels_dates = filter(return_dates, gage.logs_bin)
 

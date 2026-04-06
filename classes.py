@@ -52,25 +52,23 @@ class campaign():
                 for type in counters_types:
                     actor.counters[type] += log_entry.counters[type]
                 for type in log_entry.acceptable_types:
-                        num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
-                        print("Number of", type, "rolls:", num_of_type)
+                    num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
+                    print("Number of", type, "rolls:", num_of_type)
                 
-        '''else:
+        else:
             for player in self.players_list:
                 print(player.name)
                 for actor in player.actors_list:
                     if(actor.roll_count == 0):
                         break
+                    print(actor.name)
                     counters_types = list(actor.counters)
                     for type in counters_types:
-                        self.counters[type] += log_entry.counters[type]
-                    print("Total initialized rolls:", actor.roll_count)
-                    #print("Natural 1s rolled:", actor.counters)
-                    #print("Natural 20s rolled:", actor.nat_twenty_count)
-                    #print("Natural 100s rolled:", actor.nat_hundred_count)
-                    print("Error rolls:", actor.error_count)
-                    print("Unknown rolls:", actor.unknown_count)
-        '''
+                        actor.counters[type] += log_entry.counters[type]
+                    for type in log_entry.acceptable_types:
+                        num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
+                        print("Number of", type, "rolls:", num_of_type)
+                    
         return
 
     def list_player_actors(self):
@@ -88,6 +86,11 @@ class campaign():
             for actor in player.actors_list:
                 if actor.name == actor_name:
                     return actor 
+                
+    def fetch_player(self, player_name):
+        for player in self.players_list:
+            if player.name == player_name:
+                return player
 
 class player():
     def __init__(self, name, campaign):
@@ -111,16 +114,47 @@ class player():
             new_actor = actor(actor_name, self.name)
             self.actors_list.append(new_actor)
         return  
+    
+    def show_player_stats(self):
+        counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        roll_types_list = list(log_entry.acceptable_types)
+        roll_types_count = {}
+        for entry in range(0, len(roll_types_list)):
+            roll_types_count[roll_types_list[entry]] = 0
+        if len(self.actors_list) > 1: 
+            # if there's more than one actor, let's sum up all the counts
+            print(self.name, "has the following actors:")
+            counters_types = list(actor.counters)
+            for each in self.actors_list:
+                print(each.name)
+                for type in counters_types:
+                    counters[type] += log_entry.counters[type]
+                for type in log_entry.acceptable_types:
+                    num_of_type = len([log_entry_type for log_entry_type in each.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == each.name])
+                    print("Number of", each.name,  type, "rolls:", num_of_type)    
+        elif len(self.actors_list) == 1:
+            # if there's only one actor, show that actor's stats
+            self.actors_list[0].show_actor_stats()
+        elif len(self.actors_list) == 0:
+            print(self.name, "has no actor objects.")
             
 class actor():
     error_count = 0 
     unknown_count = 0 
     counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+
+    def __init__(self, name, player):
+        self.name = name
+        self.player = player 
+        self.logs_bin = []
+        self.logs_count = 0
+        self.roll_count = 0
+        return
+
     def add_log(self, log_entry):
         self.logs_bin.append(log_entry)
         self.logs_count = len(self.logs_bin)
         self.roll_count = self.roll_count + log_entry.roll_count
-
         counters_types = list(self.counters)
         for type in counters_types:
             self.counters[type] += log_entry.counters[type]
@@ -130,13 +164,18 @@ class actor():
         if log_entry.unknown_flag: 
             self.unknown_count += 1
         return 
-
-    def __init__(self, name, player):
-        self.name = name
-        self.player = player 
-        self.logs_bin = []
-        self.logs_count = 0
-        self.roll_count = 0
+    
+    def show_actor_stats(self):
+        print(self.name)
+        counters_types = list(self.counters)
+        print("Total actor-related logs:", (self.logs_count))
+        print("Total roll count in logs:", self.roll_count)
+        print("Total unknown type logs:", (self.unknown_count + self.error_count))
+        for type in counters_types:
+            self.counters[type] += log_entry.counters[type]
+        for type in log_entry.acceptable_types:
+            num_of_type = len([log_entry_type for log_entry_type in self.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == self.name])
+            print("Number of", type, "rolls:", num_of_type)
         return
 
 class log_entry():
@@ -147,6 +186,16 @@ class log_entry():
     error_flag = False 
     unknown_flag = True 
     counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+
+    def __init__(self, date_time, actor, log_lines, entry_type):
+        self.date_time = date_time
+        self.actor = actor
+        self.log_lines = log_lines 
+        self.roll_bin = []
+        self.roll_count = 0
+        self.entry_type = "Unknown"
+        self.entry_type = self.update_type(entry_type)
+        return
 
     def add_roll(self, roll_object):
         if len(self.roll_bin) >= 0:
@@ -176,16 +225,6 @@ class log_entry():
             self.entry_type = "Unknown"
             self.unknown_flag = True
         return self.entry_type
-
-    def __init__(self, date_time, actor, log_lines, entry_type):
-        self.date_time = date_time
-        self.actor = actor
-        self.log_lines = log_lines 
-        self.roll_bin = []
-        self.roll_count = 0
-        self.entry_type = "Unknown"
-        self.entry_type = self.update_type(entry_type)
-        return
 
 class die_roll():
     counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
