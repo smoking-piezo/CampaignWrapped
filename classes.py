@@ -49,8 +49,11 @@ class campaign():
                 print("Total actor-related logs:", (actor.logs_count))
                 print("Total roll count in logs:", actor.roll_count)
                 print("Total unknown type logs:", (actor.unknown_count+actor.error_count))
+
                 for type in counters_types:
-                    actor.counters[type] += log_entry.counters[type]
+                    # error here
+                    # do we need to do another for loop through the actor's log bin? 
+                    actor.counters[type] += len([log_with_counter for log_with_counter in actor.logs_bin if log_with_counter.counters[type] > 0])
                 for type in log_entry.acceptable_types:
                     num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
                     print("Number of", type, "rolls:", num_of_type)
@@ -117,21 +120,22 @@ class player():
     
     def show_player_stats(self):
         counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
-        roll_types_list = list(log_entry.acceptable_types)
+        counters_types = list(counters.keys())
+        roll_types = tuple(log_entry.acceptable_types)
         roll_types_count = {}
-        for entry in range(0, len(roll_types_list)):
-            roll_types_count[roll_types_list[entry]] = 0
+        for key in roll_types:
+                roll_types_count[key] = 0
         if len(self.actors_list) > 1: 
             # if there's more than one actor, let's sum up all the counts
-            print(self.name, "has the following actors:")
-            counters_types = list(actor.counters)
+            print(self.name, "has the following actors:")           
             for each in self.actors_list:
                 print(each.name)
                 for type in counters_types:
-                    counters[type] += log_entry.counters[type]
-                for type in log_entry.acceptable_types:
+                    counters[type] += len([log_with_counter for log_with_counter in each.logs_bin if log_with_counter.counters[type] > 0])
+                for type in roll_types:
                     num_of_type = len([log_entry_type for log_entry_type in each.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == each.name])
-                    print("Number of", each.name,  type, "rolls:", num_of_type)    
+                    roll_types_count[type] += num_of_type
+            print(counters, roll_types_count)   
         elif len(self.actors_list) == 1:
             # if there's only one actor, show that actor's stats
             self.actors_list[0].show_actor_stats()
@@ -139,16 +143,15 @@ class player():
             print(self.name, "has no actor objects.")
             
 class actor():
-    error_count = 0 
-    unknown_count = 0 
-    counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
-
-    def __init__(self, name, player):
+     def __init__(self, name, player):
         self.name = name
         self.player = player 
         self.logs_bin = []
         self.logs_count = 0
         self.roll_count = 0
+        self.counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        self.error_count = 0 
+        self.unknown_count = 0 
         return
 
     def add_log(self, log_entry):
@@ -166,16 +169,21 @@ class actor():
         return 
     
     def show_actor_stats(self):
+        counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
         print(self.name)
-        counters_types = list(self.counters)
+        counters_types = list(counters)
         print("Total actor-related logs:", (self.logs_count))
         print("Total roll count in logs:", self.roll_count)
         print("Total unknown type logs:", (self.unknown_count + self.error_count))
-        for type in counters_types:
-            self.counters[type] += log_entry.counters[type]
+        # need to fix this
+        #for type in counters_types:
+            #self.counters[type] += log_entry.counters[type]
         for type in log_entry.acceptable_types:
             num_of_type = len([log_entry_type for log_entry_type in self.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == self.name])
             print("Number of", type, "rolls:", num_of_type)
+        for skill_type in log_entry.skill_types: 
+            num_of_skilltype = len([log_entry_skilltype for log_entry_skilltype in self.logs_bin if log_entry_skilltype.skill_type == skill_type and log_entry_skilltype.actor == self.name])
+            print("Number of", skill_type, "rolls:", num_of_skilltype
         return
 
 class log_entry():
@@ -183,9 +191,13 @@ class log_entry():
                         "Fortitude Saving Throw", 'Unknown Saving Throw', "Skill Check", "Attack",
                         "Spell Cast", "Item Used", "Raw Roll", "Chat Message", "Ability Test",
                         "Combat Maneuver Bonus", "Caster Level Check", "Defenses", "Concentration Check", "Error"]
-    error_flag = False 
-    unknown_flag = True 
-    counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+    skill_types = ["Acrobatics", "Appraise", "Bluff", "Climb", "Craft", "Diplomacy", "Disable Device", "Disguise",
+                   "Escape Artist", "Fly", "Handle Animal", "Heal", "Intimidate", "Knowledge", "Linguistics", 
+                   "Perception", "Perform", "Profession", "Ride", "Sense Motive", "Sleight of Hand", "Spellcraft",
+                   "Stealth", "Survival", "Swim", "Use Magic Device"]
+    deep_skills = ["Craft", "Knowledge", "Perform", "Profession"]
+    knowledges = ["Arcana", "Dungeoneering", "Engineering", "Geography","History", "Local", "Nature", "Nobility", "Planes", "Religion"]
+    # TODO: pull the types of Craft, Perform, Profession from the roll line 
 
     def __init__(self, date_time, actor, log_lines, entry_type):
         self.date_time = date_time
@@ -194,7 +206,10 @@ class log_entry():
         self.roll_bin = []
         self.roll_count = 0
         self.entry_type = "Unknown"
-        self.entry_type = self.update_type(entry_type)
+        self.error_flag = False 
+        self.unknown_flag = True 
+        self.counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        self.entry_type, self.skill_type = self.update_type(entry_type, log_lines)
         return
 
     def add_roll(self, roll_object):
@@ -208,7 +223,7 @@ class log_entry():
             self.counters[type] += roll_object.counters[type]
         return 
     
-    def update_type(self, roll_type):
+    def update_type(self, roll_type, log_lines):
         if self.entry_type == "Error":
             self.error_flag = True
         if self.entry_type == "Unknown":
@@ -224,7 +239,22 @@ class log_entry():
         else: 
             self.entry_type = "Unknown"
             self.unknown_flag = True
-        return self.entry_type
+            
+        roll_id_split = log_lines[2].split(" ")
+
+        if roll_type == "Skill Check":
+            # set the skill type! otherwise skill type = N/A
+            roll_id_split.remove("Skill")
+            roll_id_split.remove("Check")
+
+            if len(roll_id_split) > 1:
+                self.skill_type = " ".join(roll_id_split)
+            else:
+                self.skill_type = roll_id_split[0]
+
+        else:
+            self.skill_type = "N/A"
+        return self.entry_type, self.skill_type
 
 class die_roll():
     counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
