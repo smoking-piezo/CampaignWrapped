@@ -29,7 +29,7 @@ def find_roll_date(log_lines):
 
     min_str_pos_start = hour_str_pos_end+1
     min_str_pos_end = hour_str_pos_end+3
-    min = int(txt[min_str_pos_start:min_str_pos_end])a
+    min = int(txt[min_str_pos_start:min_str_pos_end])
 
     sec_str_pos_start = min_str_pos_end+1
     sec_str_pos_end = sec_str_pos_start+2

@@ -143,7 +143,7 @@ class player():
             print(self.name, "has no actor objects.")
             
 class actor():
-     def __init__(self, name, player):
+    def __init__(self, name, player):
         self.name = name
         self.player = player 
         self.logs_bin = []
@@ -183,7 +183,7 @@ class actor():
             print("Number of", type, "rolls:", num_of_type)
         for skill_type in log_entry.skill_types: 
             num_of_skilltype = len([log_entry_skilltype for log_entry_skilltype in self.logs_bin if log_entry_skilltype.skill_type == skill_type and log_entry_skilltype.actor == self.name])
-            print("Number of", skill_type, "rolls:", num_of_skilltype
+            print("Number of", skill_type, "rolls:", num_of_skilltype)
         return
 
 class log_entry():
