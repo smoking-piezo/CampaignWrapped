@@ -50,11 +50,14 @@ def log_handler(log_bin, campaigns_bin):
                 picked_campaign = possible_campaign[0]
                 gamemaster_name = picked_campaign.gamemaster_name
                 picked_campaign.update_player_actor(gamemaster_name, [log.actor])
+                npc_actor = picked_campaign.fetch_actor(log.actor)
+                npc_actor.add_log(log)
+                continue
             elif len(possible_campaign) < 1:
                 raise ValueError ("This log's datetime is before any campaign's start date")
             elif len(possible_campaign) > 1: 
                 # so we have a log that is after the start date of multiple campaigns
-                print(possible_campaign)
+                pass
 
 
         for this_campaign in campaigns_bin:
@@ -130,7 +133,7 @@ def main():
     log_bin = pull_log_lines(src_file)
     log_bin = log_handler(log_bin, campaigns_bin)
 
-    #hells_rebels.show_player_stats()
+    hells_rebels.show_player_stats()
     #iron_gods.show_player_stats("Harnok (IG)")
     #iron_gods.show_player_stats()
 
