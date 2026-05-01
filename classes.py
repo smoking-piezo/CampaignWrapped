@@ -21,9 +21,11 @@ class campaign():
             new_player = player(player_name, self.name)
             self.players_list.append(new_player)
         # create that gm 
-        gamemaster = player("Gamemaster", self.name)
+        self.gamemaster_name = "Gamemaster " + self.name
+        gamemaster = player(self.gamemaster_name, self.name)
         self.players_list.append(gamemaster)
         self.start_date = start_date
+        self.latest_log = None
         return
     
     def update_player_actor(self, player_name, actors_list):
@@ -33,6 +35,8 @@ class campaign():
         
         for actor_name in actors_list:
             player_to_update.add_actor_from_campaign(actor_name)
+
+        self.latest_log = self.fetch_recent_log()
         return
 
     def show_player_stats(self, specific_player_name=""):
@@ -40,45 +44,23 @@ class campaign():
         if specific_player_name:
             for player in self.players_list:
                 if player.name == specific_player_name:
-                    specific_player = player
-            for actor in specific_player.actors_list: 
-                if(actor.roll_count == 0):
-                    break
-                print(actor.name)
-                counters_types = list(actor.counters)
-                print("Total actor-related logs:", (actor.logs_count))
-                print("Total roll count in logs:", actor.roll_count)
-                print("Total unknown type logs:", (actor.unknown_count+actor.error_count))
-
-                for type in counters_types:
-                    # error here
-                    # do we need to do another for loop through the actor's log bin? 
-                    actor.counters[type] += len([log_with_counter for log_with_counter in actor.logs_bin if log_with_counter.counters[type] > 0])
-                for type in log_entry.acceptable_types:
-                    num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
-                    print("Number of", type, "rolls:", num_of_type)
-                
+                    player.show_player_stats()                
         else:
             for player in self.players_list:
-                print(player.name)
-                for actor in player.actors_list:
-                    if(actor.roll_count == 0):
-                        break
-                    print(actor.name)
-                    counters_types = list(actor.counters)
-                    for type in counters_types:
-                        actor.counters[type] += log_entry.counters[type]
-                    for type in log_entry.acceptable_types:
-                        num_of_type = len([log_entry_type for log_entry_type in actor.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == actor.name])
-                        print("Number of", type, "rolls:", num_of_type)
-                    
+                player.show_player_stats()    
         return
+    
+    def list_npc_actors(self):
+        npc_actors = []
+        gamemaster = self.fetch_player(self.gamemaster_name)
+        npc_actors = gamemaster.list_actors()
+        return npc_actors
 
     def list_player_actors(self):
         campaign_actors = []
         # we care only about the actors that aren't the gamemaster 
         for player in self.players_list:
-            if player.name == "Gamemaster":
+            if player.name == self.gamemaster_name:
                 break
             for actor in player.actors_list:
                 campaign_actors.append(actor.name)
@@ -94,6 +76,25 @@ class campaign():
         for player in self.players_list:
             if player.name == player_name:
                 return player
+    
+    def fetch_recent_log(self):
+        recent_log = []
+        for each in self.players_list:
+            if each.fetch_recent_log() is not None:
+                recent_log.append(each.fetch_recent_log())
+                if self.latest_log is None:
+                    self.latest_log = each.fetch_recent_log()
+        
+        if all(items is None for items in recent_log) and self.latest_log is None:
+            # if each actor has no recent log then we've just initialized
+            return self.latest_log
+            
+        for log in recent_log:
+            if (self.latest_log.date_time - log.date_time) < datetime.timedelta(0):
+                # if negative, then log_datetime is more recent
+                self.latest_log = log
+        return self.latest_log
+
 
 class player():
     def __init__(self, name, campaign):
@@ -106,7 +107,38 @@ class player():
         
         # we'll add actors later as a function 
         self.actors_list = []
+        self.latest_log = None
+        self.latest_log = self.fetch_recent_log()
         return
+    
+    def fetch_recent_log(self):
+        recent_log = []
+        for item in range(0, len(self.actors_list)):
+            recent_log.append(self.actors_list[item].latest_log)
+            if recent_log[item] is not None and self.latest_log is None:
+                self.latest_log = recent_log[item]
+        
+        for each in recent_log:
+            if each is None:
+                recent_log.remove(each)
+            
+        if all(items is None for items in recent_log) and self.latest_log is None:
+            # if each actor has no recent log then we've just initialized
+            return self.latest_log
+
+        for log in recent_log:
+            if (self.latest_log.date_time - log.date_time) < datetime.timedelta(0):
+                # if negative, then log_datetime is more recent
+                self.latest_log = log
+        
+        return self.latest_log        
+
+    def list_actors(self):
+        player_actors = []
+        for each in self.actors_list:
+            player_actors.append(each.name)
+        
+        return player_actors
         
     def add_actor_from_campaign(self, actor_name):
         actor_exists = isinstance(actor_name, actor)
@@ -116,29 +148,42 @@ class player():
         else: 
             new_actor = actor(actor_name, self.name)
             self.actors_list.append(new_actor)
+        
         return  
     
     def show_player_stats(self):
         counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
+        total_roll_count = 0
         counters_types = list(counters.keys())
         roll_types = tuple(log_entry.acceptable_types)
         roll_types_count = {}
+        num_actors = len(self.actors_list)
         for key in roll_types:
                 roll_types_count[key] = 0
-        if len(self.actors_list) > 1: 
+        if num_actors > 1: 
             # if there's more than one actor, let's sum up all the counts
-            print(self.name, "has the following actors:")           
+            if num_actors > 5:
+                print(self.name, "has more than 5 actors.")
+            else:
+                print(self.name, "has the following actors:")           
             for each in self.actors_list:
-                print(each.name)
+                if num_actors < 5: 
+                    print(each.name)
+                total_roll_count += each.roll_count
                 for type in counters_types:
                     counters[type] += len([log_with_counter for log_with_counter in each.logs_bin if log_with_counter.counters[type] > 0])
                 for type in roll_types:
                     num_of_type = len([log_entry_type for log_entry_type in each.logs_bin if log_entry_type.entry_type == type and log_entry_type.actor == each.name])
                     roll_types_count[type] += num_of_type
-            print(counters, roll_types_count)   
+            for counter_type, counter_value in counters.items():
+                print(f"{counter_type}: {counter_value}")
+            for type, value in roll_types_count.items():
+                print(f"{type}: {value}")  
+            print(self.name, "has", len(self.actors_list), "actors who rolled a total of", total_roll_count, "times.")
         elif len(self.actors_list) == 1:
             # if there's only one actor, show that actor's stats
             self.actors_list[0].show_actor_stats()
+            print(self.name, "has 1 actor who rolled a total of", self.actors_list[0].roll_count, "times.")
         elif len(self.actors_list) == 0:
             print(self.name, "has no actor objects.")
             
@@ -152,6 +197,7 @@ class actor():
         self.counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
         self.error_count = 0 
         self.unknown_count = 0 
+        self.latest_log = None
         return
 
     def add_log(self, log_entry):
@@ -166,7 +212,18 @@ class actor():
             self.error_count += 1
         if log_entry.unknown_flag: 
             self.unknown_count += 1
+        self.latest_log = self.update_recent_log(log_entry)
         return 
+
+    def update_recent_log(self, log_entry):
+        # if latest_log is None, then log_entry is the first and therefore most recent
+        if self.latest_log is None:
+            return log_entry
+        # if log_entry datetime minus latest_log datetime is negative, then latest_log is more recent
+        if (log_entry.date_time - self.latest_log.date_time) < datetime.timedelta(0):
+            return self.latest_log
+        else:
+            return log_entry
     
     def show_actor_stats(self):
         counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
@@ -257,17 +314,17 @@ class log_entry():
         return self.entry_type, self.skill_type
 
 class die_roll():
-    counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
 
     def __init__(self, dx_type, dx_result, result_w_mods):
+        self.counters = {'Natural 1 Count': 0, 'Natural 20 Count': 0, 'Natural 100 Count': 0}
         self.dx_type = dx_type
         self.dx_result = dx_result
         if result_w_mods:
             self.result_w_mods = result_w_mods
         else: 
             self.result_w_mods = dx_result
-
-        self.counters = self.notable_rolls(dx_type, dx_result)
+        self.notable_rolls(dx_type, dx_result)
+        
         return
     
     def notable_rolls(self, dx_type, dx_result):
