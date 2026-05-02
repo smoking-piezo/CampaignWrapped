@@ -67,6 +67,9 @@ def log_handler(log_bin, campaigns_bin):
                 actor_obj = this_campaign.fetch_actor(log.actor)
                 actor_obj.add_log(log)
                 break
+            if log.actor in this_campaign.list_npc_actors() and log.date_time > this_campaign.start_date:
+                actor_obj = this_campaign.fetch_actor(log.actor)
+                actor_obj.add_log(log)
             else:
                  pass
             # this is where we figure out if this log belongs to a different campaign or the gm 
