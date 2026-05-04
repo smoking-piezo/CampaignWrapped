@@ -28,6 +28,10 @@ class campaign():
         self.latest_log = None
         return
     
+    def force_latest_log_update(self):
+        self.latest_log = self.fetch_recent_log()
+        return
+    
     def update_player_actor(self, player_name, actors_list):
         for player_obj in self.players_list: 
             if player_obj.name == player_name:
@@ -85,6 +89,8 @@ class campaign():
         for player in self.players_list:
             if player.name == player_name:
                 return player
+            else:
+                return None
     
     def fetch_recent_log(self):
         recent_log = []
