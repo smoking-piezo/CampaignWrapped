@@ -2,7 +2,7 @@
 # roll_identification.py 
 # These are Campaign Wrapped's roll-identifying functions. 
 
-import datetime, classes
+import datetime as dt, classes
 
 def find_actor(log_lines):
     txt = log_lines[1]
@@ -35,7 +35,7 @@ def find_roll_date(log_lines):
     sec_str_pos_end = sec_str_pos_start+2
     sec = int(txt[sec_str_pos_start:sec_str_pos_end])
 
-    roll_date = datetime.datetime(year, month, day, hour, min, sec)
+    roll_date = dt.datetime(year, month, day, hour, min, sec)
 
     return roll_date
 
