@@ -8,19 +8,13 @@
 # correct the campaign class's show player stats function to utilize the player class's function instead 
 # for the log handler function, it doesn't really matter if they're NPCs or PCs. we know which ones are PCs. so let's flatten that logic into one list
 
+# remove roll from data file dated [1/8/2024, 8:09:05 PM] Boris
+
 import datetime as dt
 import os
-import roll_identification, classes
+import roll_identification, classes, campaign_log_filter
 
-def updated_actors_lists(campaigns_bin):
-    all_actors = []
-    for campaign in campaigns_bin:
-        # get all player actors
-        campaign_player_actors = []
-        campaign_player_actors = campaign.list_actor_objs()
-        all_actors.extend(campaign_player_actors)
 
-    return all_actors
 
 def match_campaign_new_actor(campaigns_bin, log):
     # the current log actor is NOT in the PC actors list or NPC actors list for any current campaign
@@ -72,6 +66,9 @@ def match_campaign_existing_actor(campaigns_bin, log, matching_actors):
         for campaign in campaigns_bin:
             if campaign.fetch_player(actor_obj.player):
                 log_campaign.append(campaign)
+                if (log_campaign[-1].start_date - log.date_time) > dt.timedelta(0):
+                    # if the timedelta is positive, then the log datetime is BEFORE the campaign's start date, meaning it's NOT the right campaign
+                    log_campaign.remove(campaign)
 
         # if the timedelta between log.date_time and log_campaign.latest_log is less than a day, then we know for sure that we have a match!
         match_time = dt.timedelta(days=1)
@@ -87,30 +84,13 @@ def match_campaign_existing_actor(campaigns_bin, log, matching_actors):
 
 def log_handler(log_bin, campaigns_bin): 
     for log in log_bin:
-        roll_identification.initialize_roll(log)
         all_actors = updated_actors_lists(campaigns_bin)
 
-        matching_actors = []
-        for each in all_actors:
-            if each.name == log.actor: 
-                matching_actors.append(each)
-
-        if len(matching_actors) == 0:
-            # no matches, so it's a new npc. 
-            actor_obj = match_campaign_new_actor(campaigns_bin, log)
-        else: 
-            # if there is a match, we need to discern whether it's the right match, or if there's a new NPC that belongs to a different campaign with the same name
-            # if there's more than one match, we need to figure out which is the right match
-            actor_obj = match_campaign_existing_actor(campaigns_bin, log, matching_actors)
-
-        if actor_obj is not None:
-            actor_obj.add_log(log)
-        else:
-            raise ValueError([actor_obj, log.log_lines, "Actor object not found for current log"])
+        
 
     return log_bin
 
-def pull_log_lines(src_file):
+def pull_logs(src_file):
     log_bin = []
     log_lines = []
     first_line_flag = True
@@ -135,6 +115,9 @@ def pull_log_lines(src_file):
                 log_lines.append(txt)       
 
     input_file.close()
+
+    for log in log_bin:
+        roll_identification.initialize_roll(log)
     return log_bin
 
 def return_dates(log_entry):
@@ -165,7 +148,9 @@ def main():
 
     campaigns_bin = [hells_rebels, iron_gods, ruins_azlant]
 
-    log_bin = pull_log_lines(src_file)
+    log_bin = pull_logs(src_file)
+    if len(campaigns_bin) > 1:
+        filtered_log_bin = campaign_log_filter.filter_logs(log_bin, campaigns_bin)
     log_bin = log_handler(log_bin, campaigns_bin)
 
     hells_rebels.show_player_stats()
