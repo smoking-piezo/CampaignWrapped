@@ -66,13 +66,6 @@ class campaign():
                 campaign_actors.append(actor.name)
         return campaign_actors 
     
-    def list_npc_actors(self):
-        npc_actors = []
-        gamemaster = self.fetch_player(self.gamemaster_name)
-        for actor in gamemaster.actors_list:
-            npc_actors.append(actor.name)
-        return npc_actors
-    
     def fetch_actor(self, actor_name):
         for player in self.players_list:
             for actor in player.actors_list:
