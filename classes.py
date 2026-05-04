@@ -50,6 +50,15 @@ class campaign():
                 player.show_player_stats()    
         return
     
+    def list_actor_objs(self):
+        actor_objs = []
+        for player in self.players_list:
+            player_actors = []
+            player_actors = (player.list_actors_objs())
+            for actor in player_actors:
+                actor_objs.append(actor)
+        return actor_objs
+    
     def list_npc_actors(self):
         npc_actors = []
         gamemaster = self.fetch_player(self.gamemaster_name)
@@ -118,9 +127,7 @@ class player():
             if recent_log[item] is not None and self.latest_log is None:
                 self.latest_log = recent_log[item]
         
-        for each in recent_log:
-            if each is None:
-                recent_log.remove(each)
+        recent_log = [log for log in recent_log if log is not None]
             
         if all(items is None for items in recent_log) and self.latest_log is None:
             # if each actor has no recent log then we've just initialized
@@ -139,6 +146,12 @@ class player():
             player_actors.append(each.name)
         
         return player_actors
+    
+    def list_actors_objs(self):
+        player_actors_objs = []
+        for each in self.actors_list:
+            player_actors_objs.append(each)
+        return player_actors_objs
         
     def add_actor_from_campaign(self, actor_name):
         actor_exists = isinstance(actor_name, actor)
