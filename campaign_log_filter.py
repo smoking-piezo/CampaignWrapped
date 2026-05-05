@@ -22,6 +22,7 @@ def filter_logs(log_bin, campaigns_bin):
     for log in log_bin:
         possible_campaigns = []
         same_day = dt.timedelta(days = 1)
+        log_campaign = None
 
         # first, if the log.date_time is before the campaign.start_date then it can't be in that campaign
         for each in campaigns_bin:
@@ -29,70 +30,71 @@ def filter_logs(log_bin, campaigns_bin):
                 # if true, then log.date_time is AFTER the campaign start time
                 possible_campaigns.append(each)
             
-            # two ways to go from here: we can check if there's a matching actor in the possible_campaigns OR we can check if the log's date matches a campaign's latest log 
-            # note that initialization is an important edge case, since the latest log function won't be terribly useful, since there won't be any logs for us to compare to yet! 
+            # let's check each campaign's latest log. If we're not at the first roll of the day, then we can check the latest log against the current log's date. same day means we've matched the campaign
+            # note that initialization and first log of the day are important edge cases, since the latest log function won't be terribly useful, since there won't be any logs for us to compare to yet/none for the day! 
             # considering that it's POSSIBLE for an npc actor to have the same name but actually be two separate creatures in separate campaigns, let's check the log date first. 
             # if there IS a latest_log, then let's compare the dates. 
 
                 if each.latest_log is not None: 
                     # if there is a latest_log for the campaign, let's see if our log is the same day or the first log of the day 
                     log_campaign_diff = log.date_time - each.latest_log.date_time
-                    if log_campaign_diff > same_day:
-                        # ok, it's not the same day, but, is it the first roll of the day for this campaign?
-                        same_campaign_check = new_day_same_campaign(log_bin, log, each)
-                        if same_campaign_check:
-                            possible_campaigns = [each]
-                            break
+                    if log_campaign_diff <= same_day:
+                        # if it's the same day, we've found a sure match!
+                        log_campaign = each
+                        possible_campaigns = []
+                        break
+            
+            # we get here if: 1) there isn't a latest log for the campaign, 2) the latest log is more than a day away (which could indicate the wrong campaign OR that this is the first log of the day)
+            # regardless, let's check using the lookahead function. we'll see if the each campaign in the current for loop is a match for the current day by looking ahead in the log to find a PC to match a campaign
 
-        possible_actors = updated_actors_lists(possible_campaigns)
+            same_campaign_check = log_bin_lookahead(log_bin, log, each)
+            if same_campaign_check:
+                # this is a sure match! 
+                log_campaign = each
+                possible_campaigns = []
+                break
+        
+        # debugging code, delete me later, just trying to flag if we failed to find a sure match
+        if log_campaign is None and len(possible_campaigns) == 1:
+            log_campaign = possible_campaigns[0]
+        elif log_campaign is None and len(possible_campaigns) > 1:
+            raise ValueError("Did not find campaign")
+        
+        # great, we found the campaign, that's the hard part. now to find the actor and apply the log
+        possible_actors = log_campaign.list_actor_objs()
         matching_actors = []
 
-        for each in possible_actors:
-            if each.name == log.actor: 
-                matching_actors.append(each)
+        for actor in possible_actors:
+            if actor.name == log.actor: 
+                matching_actors.append(actor)
 
         if len(matching_actors) == 0:
-            # no matches, so it's a new npc. 
-            if len(possible_campaigns) == 1:
-                log_campaign = possible_campaigns[0]
-                gamemaster_name = log_campaign.gamemaster_name
-                log_campaign.update_player_actor(gamemaster_name, [log.actor])
-                actor_obj = log_campaign.fetch_actor(log.actor)
-            else:
-                # we need to do some more filtering
-                raise ValueError("There's more than one possible campaign for this new NPC.")
+            # no matches, so it's a new npc to be assigned to the GM
+            gamemaster_name = log_campaign.gamemaster_name
+            log_campaign.update_player_actor(gamemaster_name, [log.actor])
+            actor_obj = log_campaign.fetch_actor(log.actor)
+
         elif len(matching_actors) == 1:
             # if there is a match, we need to discern whether it's the right match, or if there's a new NPC that belongs to a different campaign with the same name
             # or if it's a PC, in which case we know which campaign it's from 
             if matching_actors[0].player.startswith("Gamemaster"):
-                # then we need do to something else 
-                print(log.log_lines)
-                player = matching_actors[0].player
-                for this in possible_campaigns:
-                    check_player = this.fetch_player(player)
-                    if check_player is not None:
-                        log_campaign = campaign
+                # Do we need to doublecheck this?? 
+                # let's just go with it for now
+                actor_obj = matching_actors[0]
             else:
                 actor_obj = matching_actors[0]
-                player = actor_obj.player
-                for this in possible_campaigns:
-                    check_player = this.fetch_player(player)
-                    if check_player is not None:
-                        log_campaign = this
+        elif len(matching_actors) > 1:
+            print("PANIC!!! MORE THAN ONE MATCHING ACTOR", log.actor, matching_actors)
 
         if actor_obj is not None:
             actor_obj.add_log(log)
             log_campaign.force_latest_log_update()
         else:
             raise ValueError([actor_obj, log.log_lines, "Actor object not found for current log"])
-        
-        
-
-
 
     return filtered_log_bin
 
-def new_day_same_campaign(log_bin, log, campaign):
+def log_bin_lookahead(log_bin, log, campaign):
     log_index = 0
     log_date = log.date_time
     same_day = dt.timedelta(days = 1)
@@ -104,32 +106,17 @@ def new_day_same_campaign(log_bin, log, campaign):
             log_index = index
         
     index_date = log_bin[log_index].date_time
-    while (index_date - log_date) <= same_day:
+    date_check = index_date - log_date
+
+    while date_check <= same_day:
         if log_bin[log_index].actor in campaign_player_actors:
             campaign_match = True
             return campaign_match
-        if log_index < len(log_bin):
+        if log_index < len(log_bin)-1:
             log_index += 1 
             index_date = log_bin[log_index].date_time
+            date_check = index_date - log_date
         else:
             break
     
     return campaign_match
-    
-            
-
-
-    
-
-def updated_actors_lists(campaigns_bin):
-    all_actors = []
-    try:
-        for campaign in campaigns_bin:
-            # get all player actors
-            campaign_player_actors = []
-            campaign_player_actors = campaign.list_actor_objs()
-            all_actors.extend(campaign_player_actors)
-    except:
-        all_actors = campaigns_bin.list_actor_objs()
-
-    return all_actors
