@@ -129,13 +129,17 @@ def main():
     log_bin = []
 
     hells_rebels = classes.campaign("Hell's Rebels", dt.datetime(2022, 8, 8), ["H1 (HR)", "Zen (HR)", "D1 (HR)", "M1 (HR)"])
-    hells_rebels.update_player_actor("Zen (HR)", ["Namielle", "Ercia Kash"])
-    hells_rebels.update_player_actor("H1 (HR)",["Valeric"])
+    hells_rebels.update_player_actor("Zen (HR)", ["Namielle", "Ercia Kash", "Zen Zombie", "Zen"])
+    #hells_rebels.update_player_actor("Zen (HR)", ["Namielle", "Ercia Kash"])
+    hells_rebels.update_player_actor("H1 (HR)",["Valeric", "Harnok"])
+    #hells_rebels.update_player_actor("H1 (HR)",["Valeric"])
+    #hells_rebels.update_player_actor("D1 (HR)", ["Gage", "Rumkin", "Lieutenant_Doggo"])
     hells_rebels.update_player_actor("D1 (HR)", ["Gage"])
     hells_rebels.update_player_actor("M1 (HR)", ["Tihana"])
 
     iron_gods = classes.campaign("Iron Gods", dt.datetime(2024, 1, 8), ["Harnok (IG)", "Z1 (IG)", "D1 (IG)", "M1 (IG)"])
-    iron_gods.update_player_actor("Harnok (IG)", ["Construct", "Harnok"])
+    #iron_gods.update_player_actor("Harnok (IG)", ["Construct", "Harnok", "Beetle Bus"])
+    iron_gods.update_player_actor("Harnok (IG)", ["Construct"])
     iron_gods.update_player_actor("Z1 (IG)", ["Sassiel GreeTrink"])
     iron_gods.update_player_actor("D1 (IG)", ["Rory"])
     iron_gods.update_player_actor("M1 (IG)", ["Verna", "Irontrunk", "Hazal/Verna/Suvi/Talvi"])
@@ -149,17 +153,18 @@ def main():
     campaigns_bin = [hells_rebels, iron_gods, ruins_azlant]
 
     log_bin = pull_logs(src_file)
+    #check = campaign_log_filter.log_bin_lookahead(log_bin, log_bin[4682], hells_rebels)
     if len(campaigns_bin) > 1:
         filtered_log_bin = campaign_log_filter.filter_logs(log_bin, campaigns_bin)
-    log_bin = log_handler(log_bin, campaigns_bin)
+    #log_bin = log_handler(log_bin, campaigns_bin)
 
     hells_rebels.show_player_stats()
     #iron_gods.show_player_stats("Harnok (IG)")
-    #iron_gods.show_player_stats()
+    iron_gods.show_player_stats()
 
     zen = hells_rebels.fetch_player("Zen (HR)")
-    log = zen.fetch_recent_log()
-    print(log.actor, log.date_time)
+    this_log = zen.fetch_recent_log()
+    print(this_log.actor, this_log.date_time)
 
     most_recent_log = hells_rebels.fetch_recent_log()
     print(most_recent_log.actor, most_recent_log.date_time)
