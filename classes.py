@@ -89,8 +89,8 @@ class campaign():
         for player in self.players_list:
             if player.name == player_name:
                 return player
-            else:
-                return None
+    
+        return None
     
     def fetch_recent_log(self):
         recent_log = []
