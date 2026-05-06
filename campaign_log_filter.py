@@ -26,7 +26,7 @@ def filter_logs(log_bin, campaigns_bin):
 
         # first, if the log.date_time is before the campaign.start_date then it can't be in that campaign
         for each in campaigns_bin:
-            if (each.start_date - log.date_time) < dt.timedelta(0):
+            if (each.start_date - log.date_time) <= dt.timedelta(0):
                 # if true, then log.date_time is AFTER the campaign start time
                 possible_campaigns.append(each)
             
@@ -40,6 +40,7 @@ def filter_logs(log_bin, campaigns_bin):
                     log_campaign_diff = log.date_time - each.latest_log.date_time
                     if log_campaign_diff <= same_day:
                         # if it's the same day, we've found a sure match!
+                        # hey... turns out that's not true 
                         log_campaign = each
                         possible_campaigns = []
                         break
@@ -104,19 +105,52 @@ def log_bin_lookahead(log_bin, log, campaign):
     for index in range(0, len(log_bin)): 
         if log_bin[index] == log:
             log_index = index
+            break
         
     index_date = log_bin[log_index].date_time
     date_check = index_date - log_date
+    checking_index = log_index + 1
+    loop_count = 0
 
-    while date_check <= same_day:
-        if log_bin[log_index].actor in campaign_player_actors:
-            campaign_match = True
-            return campaign_match
-        if log_index < len(log_bin)-1:
-            log_index += 1 
-            index_date = log_bin[log_index].date_time
-            date_check = index_date - log_date
+    # okay, this while loop is slow and limited 
+    # can we just pull all logs where the log_date is within abs(dt.timedelta(day = 1))
+
+    same_day_log_bin = [same_day_log for same_day_log in log_bin if abs(index_date - same_day_log.date_time) <= same_day]
+    same_day_actors = []
+    
+    for each in same_day_log_bin:
+        same_day_actors.append(each.actor)
+    
+    # turn the lists into sets and compare - any intersections means a campaign match
+    campaign_player_actors = set(campaign_player_actors)
+    same_day_actors = set(same_day_actors)
+    same_day_player_actors = campaign_player_actors.intersection(same_day_actors)
+
+    if(same_day_player_actors):
+        campaign_match = True
+        return campaign_match
+
+    '''
+    while True:
+        if dt.timedelta(0) <= date_check <= same_day:
+            if log_bin[checking_index].actor in campaign_player_actors:
+                campaign_match = True
+                return campaign_match
+            if checking_index < len(log_bin)-1:
+                checking_index += 1 
+                checking_date = log_bin[checking_index].date_time
+                loop_count += 1
+                date_check = checking_date - log_date
+                if loop_count < 10 and date_check > same_day:
+                    # if we checked fewer than 10 logs, then we were at the end of the day and didn't get a good sample 
+                    # so let's retry the loop at 10 logs before the log_index? 
+                    checking_index = log_index - 10
+                    checking_date = log_bin[checking_index].date_time
+                    date_check = checking_date - log_date
+                    # what's screwing this logic over is a day that the GM rolled two whole rolls on NPCs. 
+                if loop_count > 30:
+                    break
         else:
             break
-    
+    '''
     return campaign_match
